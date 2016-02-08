@@ -9,16 +9,6 @@ from time import sleep
 import os,sys
 import traceback
 
-#
-# Converts an enumeration to a printable string.
-#
-def enumToString(constants, enum, elem):
-    all = constants.all_values(enum)
-    for e in all.keys():
-        if str(elem) == str(all[e]):
-            return e
-    return "<unknown>"
-
 class VMHandler:
     def __init__(self, vm_name):
         self.vm_name = vm_name
@@ -51,9 +41,6 @@ class VMHandler:
             console = self.session.console
             self.mouse = console.mouse
             self.keyboard = console.keyboard
-            #self.mouse.putMouseEvent(200, 200, 0, 0, 0x00)
-            #mouse.putMouseEventAbsolute(200, 200, 0, 0, 0x00)
-            #self.keyboard.putScancodes([0x10, 0x90]) #press and release a/q key (azerty/qwerty)
 
 
     def __del__(self):
