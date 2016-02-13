@@ -1,16 +1,30 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
 from scancodes import *
 import subprocess
 from vboxapi import VirtualBoxManager
+from v4l2 import *
+import numpy as np
+import fcntl
 
 from time import sleep
+import threading
 
 import os,sys
 import traceback
 
+def capture(device, format, display, bmp_fmt):
+
+    while True:
+        im = display.takeScreenShotToArray(0, format.fmt.pix.width, format.fmt.pix.height, bmp_fmt)
+        img=np.fromstring(im)
+        device.write(img)
+        sleep(1./60.)
+    
+
 class VMHandler:
-    def __init__(self, vm_name):
+    def __init__(self, vm_name, vidDevName = None):
+        
         self.vm_name = vm_name
 
         # This is a VirtualBox COM/XPCOM API client, no data needed.
@@ -21,26 +35,59 @@ class VMHandler:
         # Get the global VirtualBox object
         vbox = self.wrapper.vbox
 
-        print "Running VirtualBox version %s" %(vbox.version)
+        print ("Running VirtualBox version %s" %(vbox.version))
 
         # Get all constants through the Python wrapper code
         self.vboxConstants = self.wrapper.constants
 
         self.mach = vbox.findMachine(vm_name)
+
+        # Get the session object
+        self.session = mgr.getSessionObject(vbox)
+
+        progress = self.mach.launchVMProcess(self.session, "headless", "")
+        progress.waitForCompletion(-1)
+
+        # Our session object is ready at this point, the machine is already locked
+        # since we launched it ourselves
         
-        # Do some stuff which requires a running VM
-        if self.mach.state == self.vboxConstants.MachineState_Running:
-    
-            # Get the session object
-            self.session = mgr.getSessionObject(vbox)
+        if self.mach.state == self.vboxConstants.MachineState_PoweredOff:
+            self.session.console.powerUp()
 
-            # Lock the current machine (shared mode, since we won't modify the machine)
-            self.mach.lockMachine(self.session, self.vboxConstants.LockType_Shared)
+        while self.mach.state != self.vboxConstants.MachineState_Running:
+            sleep(0.1)
+        
+        console = self.session.console
 
-            # Acquire the VM's console and guest object
-            console = self.session.console
-            self.mouse = console.mouse
-            self.keyboard = console.keyboard
+        self.mouse = console.mouse
+        self.keyboard = console.keyboard
+        self.display = console.display
+
+        # Check if we have a v4l2 device to write to
+        if vidDevName != None:
+            
+            self.device = open(vidDevName, 'w', 0) # Do not forget the 0 for unbuffered mode RGB(A) won't work otherwise
+
+            fmt = V4L2_PIX_FMT_RGB32
+
+            width = 640
+            height = 480
+        
+            self.format = v4l2.v4l2_format()
+            self.format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT
+            self.format.fmt.pix.pixelformat = fmt
+            self.format.fmt.pix.width = width
+            self.format.fmt.pix.height = height
+            self.format.fmt.pix.field = V4L2_FIELD_NONE
+            self.format.fmt.pix.bytesperline = width * 4
+            self.format.fmt.pix.sizeimage = width * height * 4
+            self.format.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB
+
+            fcntl.ioctl(self.device, VIDIOC_S_FMT, self.format)
+        
+            self.vmDesktopCapture = threading.Thread(capture(self.device, self.format, self.display, self.vboxConstants.BitmapFormat_RGBA))
+            self.vmDesktopCapture.daemon = True
+            self.vmDesktopCapture.start() # Run the capturing thread
 
 
     def __del__(self):
@@ -49,8 +96,8 @@ class VMHandler:
             # We're done -- don't forget to unlock the machine!
             self.session.unlockMachine()
         
-        # Call destructor and delete wrapper
-        del self.wrapper
+            # Call destructor and delete wrapper
+            del self.wrapper
         
         
     def handle_command(self, c):
@@ -66,17 +113,41 @@ class VMHandler:
         if tks[0] == 'MOUSESET':
             self.handle_mouseset_command(tks[1])
 
-        if tks[0] == 'MOUSELC':
+        if tks[0] == 'LC':
             self.handle_mouselc_command()
 
-        if tks[0] == 'MOUSERC':
+        if tks[0] == 'RC':
             self.handle_mouserc_command()
 
-        if tks[0] == 'MOUSEMC':
+        if tks[0] == 'MC':
             self.handle_mousemc_command()
 
-        if tks[0] == 'MOUSEDC':
+        if tks[0] == 'DC':
             self.handle_mousedc_command()
+
+        if tks[0] == 'ML':
+            self.handle_ml_command()
+
+        if tks[0] == 'MR':
+            self.handle_mr_command()
+
+        if tks[0] == 'MU':
+            self.handle_mu_command()
+
+        if tks[0] == 'MD':
+            self.handle_md_command()
+
+        if tks[0] == 'MLL':
+            self.handle_mll_command()
+
+        if tks[0] == 'MRR':
+            self.handle_mrr_command()
+
+        if tks[0] == 'MUU':
+            self.handle_muu_command()
+
+        if tks[0] == 'MDD':
+            self.handle_mdd_command()
 
                 
     def handle_type_command(self, c):
@@ -93,7 +164,7 @@ class VMHandler:
 
         tks = c.split(" ")
         if len(tks) != 2:
-            print "Wrong number of parameters for MOUSEMOVE."
+            print("Wrong number of parameters for MOUSEMOVE.")
             return
 
         try:
@@ -104,14 +175,14 @@ class VMHandler:
             self.mouse.putMouseEvent(dx, dy, 0, 0, 0x00)
             
         except ValueError:
-            print "Cannot parse MOUSEMOVE parameters as integers."
+            print("Cannot parse MOUSEMOVE parameters as integers.")
 
 
     def handle_mouseset_command(self, c):
 
         tks = c.split(" ")
         if len(tks) != 2:
-            print "Wrong number of parameters for MOUSEMOVE."
+            print("Wrong number of parameters for MOUSEMOVE.")
             return
 
         try:
@@ -123,7 +194,7 @@ class VMHandler:
             self.mouse.putMouseEvent(0, 0, 0, 0, 0x00) # need this so the mouse stays visible
             
         except ValueError:
-            print "Cannot parse MOUSESET parameters as integers."
+            print("Cannot parse MOUSESET parameters as integers.")
 
 
     def handle_mouselc_command(self):
@@ -151,3 +222,43 @@ class VMHandler:
         sleep(0.05)
         self.mouse.putMouseEvent(0, 0, 0, 0, 0x01)
         self.mouse.putMouseEvent(0, 0, 0, 0, 0x00)
+
+        
+    def handle_ml_command(self):
+
+        self.mouse.putMouseEvent(-3, 0, 0, 0, 0x00)
+        
+
+    def handle_mr_command(self):
+
+        self.mouse.putMouseEvent(3, 0, 0, 0, 0x00)
+        
+
+    def handle_mu_command(self):
+
+        self.mouse.putMouseEvent(0, -3, 0, 0, 0x00)
+        
+
+    def handle_md_command(self):
+        
+        self.mouse.putMouseEvent(0, 3, 0, 0, 0x00)
+
+
+    def handle_mll_command(self):
+
+        self.mouse.putMouseEvent(-15, 0, 0, 0, 0x00)
+        
+
+    def handle_mrr_command(self):
+
+        self.mouse.putMouseEvent(15, 0, 0, 0, 0x00)
+        
+
+    def handle_muu_command(self):
+
+        self.mouse.putMouseEvent(0, -15, 0, 0, 0x00)
+        
+
+    def handle_mdd_command(self):
+        
+        self.mouse.putMouseEvent(0, 15, 0, 0, 0x00)

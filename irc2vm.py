@@ -25,10 +25,7 @@ class VMBot(irc.bot.SingleServerIRCBot):
         #self.do_command(e, e.arguments[0])
 
     def on_pubmsg(self, c, e):
-        a = e.arguments[0].split(" ",1)
-        if a[0] == self.command_str:
-            self.vm_handler.handle_command(a[1])
-        return
+        self.vm_handler.handle_command(e.arguments[0])
 
     def on_dccmsg(self, c, e):
         # non-chat DCC messages are raw bytes; decode as text
@@ -89,9 +86,10 @@ def main():
             sys.exit(1)
     else:
         port = 6667
+        
     channel = sys.argv[2]
     nickname = sys.argv[3]
-
+    
     vm_name = "Windows XP"
     vm_handler = VMHandler(vm_name)
     bot = VMBot(vm_handler, channel, nickname, server, port)

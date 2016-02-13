@@ -77,7 +77,6 @@ def press(c,l):
     for val in l[c]:
         hex_arr.append(val)
 
-    print hex_arr
     return hex_arr
 
 
