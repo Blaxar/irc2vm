@@ -72,8 +72,8 @@ class VMBot(irc.bot.SingleServerIRCBot):
 
 def main():
     import sys
-    if len(sys.argv) != 4:
-        print("Usage: testbot <server[:port]> <channel> <nickname>")
+    if len(sys.argv) < 5:
+        print("Usage: testbot <server[:port]> <channel> <nickname> <VM name> [<out video device>]")
         sys.exit(1)
 
     s = sys.argv[1].split(":", 1)
@@ -89,9 +89,13 @@ def main():
         
     channel = sys.argv[2]
     nickname = sys.argv[3]
-    
-    vm_name = "Windows XP"
-    vm_handler = VMHandler(vm_name)
+    vm_name = sys.argv[4]
+    vidDevName = None
+            
+    if len(sys.argv) == 6:
+        vidDevName = sys.argv[5]
+        
+    vm_handler = VMHandler(vm_name, vidDevName)
     bot = VMBot(vm_handler, channel, nickname, server, port)
     bot.start()
 

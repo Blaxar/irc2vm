@@ -16,11 +16,13 @@ import traceback
 def capture(device, format, display, bmp_fmt):
 
     while True:
-        im = display.takeScreenShotToArray(0, format.fmt.pix.width, format.fmt.pix.height, bmp_fmt)
-        img=np.fromstring(im)
-        device.write(img)
-        sleep(1./60.)
-    
+        try:
+            im = display.takeScreenShotToArray(0, format.fmt.pix.width, format.fmt.pix.height, bmp_fmt)
+            img=np.fromstring(im)
+            device.write(img)
+            sleep(1./60.)
+        except Exception as e:
+            sleep(0.1)
 
 class VMHandler:
     def __init__(self, vm_name, vidDevName = None):
@@ -73,7 +75,7 @@ class VMHandler:
             width = 640
             height = 480
         
-            self.format = v4l2.v4l2_format()
+            self.format = v4l2_format()
             self.format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT
             self.format.fmt.pix.pixelformat = fmt
             self.format.fmt.pix.width = width
@@ -84,7 +86,7 @@ class VMHandler:
             self.format.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB
 
             fcntl.ioctl(self.device, VIDIOC_S_FMT, self.format)
-        
+            
             self.vmDesktopCapture = threading.Thread(capture(self.device, self.format, self.display, self.vboxConstants.BitmapFormat_RGBA))
             self.vmDesktopCapture.daemon = True
             self.vmDesktopCapture.start() # Run the capturing thread
