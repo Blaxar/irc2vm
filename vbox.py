@@ -13,16 +13,26 @@ import threading
 import os,sys
 import traceback
 
-def capture(device, format, display, bmp_fmt):
+class V4l2Capture(threading.Thread):
 
-    while True:
-        try:
-            im = display.takeScreenShotToArray(0, format.fmt.pix.width, format.fmt.pix.height, bmp_fmt)
-            img=np.fromstring(im)
-            device.write(img)
-            sleep(1./60.)
-        except Exception as e:
-            sleep(0.1)
+    def __init__(self, device, format, display, bmp_fmt):
+        self.device = device
+        self.format = format
+        self.display = display
+        self.bmp_fmt = bmp_fmt
+        super(V4l2Capture,self).__init__()
+
+    def run(self):
+
+        while True:
+            try:
+                im = self.display.takeScreenShotToArray(0, self.format.fmt.pix.width, self.format.fmt.pix.height, self.bmp_fmt)
+                img=np.fromstring(im)
+                self.device.write(img)
+                sleep(1./60.)
+            except Exception as e:
+                sleep(0.1)
+                
 
 class VMHandler:
     def __init__(self, vm_name, vidDevName = None):
@@ -86,8 +96,8 @@ class VMHandler:
             self.format.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB
 
             fcntl.ioctl(self.device, VIDIOC_S_FMT, self.format)
-            
-            self.vmDesktopCapture = threading.Thread(capture(self.device, self.format, self.display, self.vboxConstants.BitmapFormat_RGBA))
+
+            self.vmDesktopCapture = V4l2Capture(self.device, self.format, self.display, self.vboxConstants.BitmapFormat_RGBA)
             self.vmDesktopCapture.daemon = True
             self.vmDesktopCapture.start() # Run the capturing thread
 
