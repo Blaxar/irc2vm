@@ -194,7 +194,7 @@ class VMHandler:
 
         tks = c.split(" ")
         if len(tks) != 2:
-            print("Wrong number of parameters for MOUSEMOVE.")
+            print("Wrong number of parameters for MOUSESET.")
             return
 
         try:
