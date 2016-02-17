@@ -80,8 +80,8 @@ class VMHandler:
             
             self.device = open(vidDevName, 'w', 0) # Do not forget the 0 for unbuffered mode RGB(A) won't work otherwise
 
-            fmt = V4L2_PIX_FMT_RGB32
-
+            fmt = V4L2_PIX_FMT_BGR32
+            
             width = 640
             height = 480
         
@@ -97,7 +97,7 @@ class VMHandler:
 
             fcntl.ioctl(self.device, VIDIOC_S_FMT, self.format)
 
-            self.vmDesktopCapture = V4l2Capture(self.device, self.format, self.display, self.vboxConstants.BitmapFormat_RGBA)
+            self.vmDesktopCapture = V4l2Capture(self.device, self.format, self.display, self.vboxConstants.BitmapFormat_BGRA)
             self.vmDesktopCapture.daemon = True
             self.vmDesktopCapture.start() # Run the capturing thread
 
