@@ -1,7 +1,13 @@
 #! /usr/bin/env python3
 
 L_SHIFT = 0x2a
-R_SHIFT = 0x56
+R_SHIFT = 0x36
+BACKSPACE = 0x0e
+TAB = 0x0f
+L_ALT = 0x38
+SPACE = 0x39
+ENTER = 0x1c
+L_CTRL = 0x1d
 
 qwerty= {
     '1': (0x02,),
@@ -66,7 +72,50 @@ qwerty= {
     'B': (L_SHIFT,0x30,),
     'N': (L_SHIFT,0x31,),
     'M': (L_SHIFT,0x32,),
-    ' ': (0x39,)
+    ' ': (0x39,),
+    '1': (0x02,),
+    '2': (0x03,),
+    '3': (0x04,),
+    '4': (0x05,),
+    '5': (0x06,),
+    '6': (0x07,),
+    '7': (0x08,),
+    '8': (0x09,),
+    '9': (0x0a,),
+    '0': (0x0b,),
+    '-': (0x0c,),
+    '=': (0x0d,),
+    '!': (L_SHIFT,0x02,),
+    '@': (L_SHIFT,0x03,),
+    '#': (L_SHIFT,0x04,),
+    '$': (L_SHIFT,0x05,),
+    '%': (L_SHIFT,0x06,),
+    '^': (L_SHIFT,0x07,),
+    '&': (L_SHIFT,0x08,),
+    '*': (L_SHIFT,0x09,),
+    '(': (L_SHIFT,0x0a,),
+    ')': (L_SHIFT,0x0b,),
+    '_': (L_SHIFT,0x0c,),
+    '+': (L_SHIFT,0x0d,),
+    '[': (0x1a,),
+    ']': (0x1b,),
+    '{': (L_SHIFT,0x1a,),
+    '}': (L_SHIFT,0x1b,),
+    ';': (0x27,),
+    '\'': (0x28,),
+    ':': (L_SHIFT,0x27,),
+    '"': (L_SHIFT,0x28,),
+    '`': (0x29,),
+    '~': (L_SHIFT,0x29,),
+    '\\': (0x2b,),
+    '|': (L_SHIFT,0x2b,),
+    ',': (0x33,),
+    '.': (0x34,),
+    '/': (0x35,),
+    '<': (L_SHIFT,0x33,),
+    '>': (L_SHIFT,0x34,),
+    '?': (L_SHIFT,0x35,),
+    
 }
 
 

@@ -38,6 +38,7 @@ class VMHandler:
     def __init__(self, vm_name, vidDevName = None):
         
         self.vm_name = vm_name
+        self.mouse_btns = 0x00
 
         # This is a VirtualBox COM/XPCOM API client, no data needed.
         self.wrapper = VirtualBoxManager(None, None)
@@ -161,6 +162,41 @@ class VMHandler:
         if tks[0] == 'MDD':
             self.handle_mdd_command()
 
+        if tks[0] == 'MHOLD':
+            self.handle_mousehold_command()
+
+        if tks[0] == 'MRELEASE':
+            self.handle_mouserelease_command()
+
+        if tks[0] == 'SHOLD':
+            self.handle_shifthold_command()
+
+        if tks[0] == 'SRELEASE':
+            self.handle_shiftrelease_command()
+
+        if tks[0] == 'AHOLD':
+            self.handle_althold_command()
+
+        if tks[0] == 'ARELEASE':
+            self.handle_altrelease_command()
+
+        if tks[0] == 'CHOLD':
+            self.handle_ctrlhold_command()
+
+        if tks[0] == 'CRELEASE':
+            self.handle_ctrlrelease_command()
+
+        if tks[0] == 'ENTER':
+            self.handle_enter_command()
+
+        if tks[0] == 'SPACE':
+            self.handle_space_command()
+
+        if tks[0] == 'RET':
+            if len(tks) > 1:
+                self.handle_return_command(tks[1])
+            else:
+                self.handle_return_command()
                 
     def handle_type_command(self, c):
 
@@ -237,40 +273,101 @@ class VMHandler:
 
         
     def handle_ml_command(self):
-
-        self.mouse.putMouseEvent(-3, 0, 0, 0, 0x00)
+        self.mouse.putMouseEvent(-3, 0, 0, 0, self.mouse_btns)
         
 
     def handle_mr_command(self):
-
-        self.mouse.putMouseEvent(3, 0, 0, 0, 0x00)
+        self.mouse.putMouseEvent(3, 0, 0, 0, self.mouse_btns)
         
 
     def handle_mu_command(self):
-
-        self.mouse.putMouseEvent(0, -3, 0, 0, 0x00)
+        self.mouse.putMouseEvent(0, -3, 0, 0, self.mouse_btns)
         
 
     def handle_md_command(self):
-        
-        self.mouse.putMouseEvent(0, 3, 0, 0, 0x00)
+        self.mouse.putMouseEvent(0, 3, 0, 0, self.mouse_btns)
 
 
     def handle_mll_command(self):
-
-        self.mouse.putMouseEvent(-15, 0, 0, 0, 0x00)
+        self.mouse.putMouseEvent(-15, 0, 0, 0, self.mouse_btns)
         
 
     def handle_mrr_command(self):
-
-        self.mouse.putMouseEvent(15, 0, 0, 0, 0x00)
+        self.mouse.putMouseEvent(15, 0, 0, 0, self.mouse_btns)
         
 
     def handle_muu_command(self):
-
-        self.mouse.putMouseEvent(0, -15, 0, 0, 0x00)
+        self.mouse.putMouseEvent(0, -15, 0, 0, self.mouse_btns)
         
 
     def handle_mdd_command(self):
+        self.mouse.putMouseEvent(0, 15, 0, 0, self.mouse_btns)
+
+
+    def handle_mousehold_command(self):
+        self.mouse_btns = 0x01
+        self.mouse.putMouseEvent(0, 0, 0, 0, self.mouse_btns)
+
+
+    def handle_mouserelease_command(self):
+        self.mouse_btns = 0x00
+        self.mouse.putMouseEvent(0, 0, 0, 0, self.mouse_btns)
+
         
-        self.mouse.putMouseEvent(0, 15, 0, 0, 0x00)
+    def handle_shifthold_command(self):
+        self.keyboard.putScancodes([L_SHIFT])
+
+
+    def handle_shiftrelease_command(self):
+        self.keyboard.putScancodes([L_SHIFT | 0x80])
+        
+
+    def handle_althold_command(self):
+        self.keyboard.putScancodes([L_ALT])
+        
+
+    def handle_altrelease_command(self):
+        self.keyboard.putScancodes([L_ALT | 0x80])
+        
+
+    def handle_ctrlhold_command(self):
+        self.keyboard.putScancodes([L_CTRL])
+
+
+    def handle_ctrlrelease_command(self):
+        self.keyboard.putScancodes([L_CTRL | 0x80])
+
+
+    def handle_enter_command(self):
+        self.keyboard.putScancodes([ENTER])
+        self.keyboard.putScancodes([ENTER | 0x80])
+
+        
+    def handle_space_command(self):
+        self.keyboard.putScancodes([SPACE])
+        self.keyboard.putScancodes([SPACE | 0x80])
+        
+        
+    def handle_return_command(self, c=None):
+
+        if c == None:
+            self.keyboard.putScancodes([BACKSPACE])
+            self.keyboard.putScancodes([BACKSPACE | 0x80])
+        
+            return
+        
+        tks = c.split(" ")
+        if len(tks) == 1:
+        
+            try:
+            
+                num = int(tks[0])
+
+                for i in range(0,num):
+                    self.keyboard.putScancodes([BACKSPACE])
+                    self.keyboard.putScancodes([BACKSPACE | 0x80])
+            
+            except ValueError:
+                print("Cannot parse RET parameters as integers.")
+            
+        
