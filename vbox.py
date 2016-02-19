@@ -118,13 +118,16 @@ class VMHandler:
         tks = c.split(" ",1)
         
         if tks[0] == 'TYPE':
-            self.handle_type_command(tks[1])
+            if len(tks) == 2:
+                self.handle_type_command(tks[1])
 
         if tks[0] == 'MOUSEMOVE':
-            self.handle_mousemove_command(tks[1])
+            if len(tks) == 2:
+                self.handle_mousemove_command(tks[1])
 
         if tks[0] == 'MOUSESET':
-            self.handle_mouseset_command(tks[1])
+            if len(tks) == 2:
+                self.handle_mouseset_command(tks[1])
 
         if tks[0] == 'LC':
             self.handle_mouselc_command()
@@ -138,6 +141,14 @@ class VMHandler:
         if tks[0] == 'DC':
             self.handle_mousedc_command()
 
+        if tks[0] == 'MX':
+            if len(tks) == 2:
+                self.handle_mx_command(tks[1])
+
+        if tks[0] == 'MY':
+            if len(tks) == 2:
+                self.handle_my_command(tks[1])
+            
         if tks[0] == 'ML':
             self.handle_ml_command()
 
@@ -271,6 +282,35 @@ class VMHandler:
         self.mouse.putMouseEvent(0, 0, 0, 0, 0x01)
         self.mouse.putMouseEvent(0, 0, 0, 0, 0x00)
 
+
+    def handle_mx_command(self, c):
+        
+        tks = c.split(" ")
+        if len(tks) != 1:
+            print("Wrong number of parameters for MX.")
+            return
+
+        try:
+
+            self.mouse.putMouseEvent(int(tks[0]), 0, 0, 0, self.mouse_btns)
+            
+        except ValueError:
+            print("Cannot parse MX parameters as integers.")
+
+
+    def handle_my_command(self, c):
+        
+        tks = c.split(" ")
+        if len(tks) != 1:
+            print("Wrong number of parameters for MY.")
+            return
+
+        try:
+            self.mouse.putMouseEvent(0, int(tks[0]), 0, 0, self.mouse_btns)
+            
+        except ValueError:
+            print("Cannot parse MY parameters as integers.")
+        
         
     def handle_ml_command(self):
         self.mouse.putMouseEvent(-3, 0, 0, 0, self.mouse_btns)
