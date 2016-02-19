@@ -1,9 +1,12 @@
 #! /usr/bin/env python2
 
+import irc
 import irc.bot
 import irc.strings
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 from vbox import VMHandler
+
+irc.client.ServerConnection.buffer_class = irc.buffer.LenientDecodingLineBuffer #To take care of invalid utf-8 codes
 
 class VMBot(irc.bot.SingleServerIRCBot):
     def __init__(self, vm_handler, channel, nickname, server, port=6667):
@@ -97,6 +100,7 @@ def main():
         
     vm_handler = VMHandler(vm_name, vidDevName)
     bot = VMBot(vm_handler, channel, nickname, server, port)
+
     bot.start()
 
 if __name__ == "__main__":

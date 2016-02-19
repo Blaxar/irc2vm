@@ -205,7 +205,7 @@ class VMHandler:
                 self.keyboard.putScancodes(type_in(tk,qwerty))
                 
             except KeyError as ke:
-                print("No corresponding scancode(s) to type'" + tk +"'.")
+                print("No corresponding scancode(s) to type '" + tk +"'.")
 
                 
     def handle_mousemove_command(self, c):
