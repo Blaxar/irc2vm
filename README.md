@@ -18,6 +18,10 @@ An irc bot controlling a VirtualBox by translating chat commands to mouse and ke
 
 **DC** : Left mouse button double-click.
 
+**MX x** : Move mouse x pixels on the abscissa (works with negatives values too).
+
+**MY y** : Move mouse y pixels on the ordinate (works with negatives values too).
+
 **ML** : Move mouse slightly to the left.
 
 **MR** : Move mouse slightly to the right.
