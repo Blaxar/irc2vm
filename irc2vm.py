@@ -4,9 +4,22 @@ import irc
 import irc.bot
 import irc.strings
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
-from vbox import VMHandler
+from VMHandler import IrcVMHandler
+
+import threading
 
 irc.client.ServerConnection.buffer_class = irc.buffer.LenientDecodingLineBuffer #To take care of invalid utf-8 codes
+
+class AsyncThread(threading.Thread):
+
+    def __init__(self, bot):
+        self.bot = bot
+        super(AsyncThread,self).__init__()
+        self.daemon = True
+        
+    def run(self):
+        self.bot.start()
+        
 
 class VMBot(irc.bot.SingleServerIRCBot):
     def __init__(self, vm_handler, channel, nickname, server, port=6667):
@@ -72,6 +85,7 @@ class VMBot(irc.bot.SingleServerIRCBot):
                 dcc.localport))
         else:
             c.notice(nick, "Not understood: " + cmd)
+            
 
 def main():
     import sys
@@ -98,10 +112,14 @@ def main():
     if len(sys.argv) == 6:
         vidDevName = sys.argv[5]
         
-    vm_handler = VMHandler(vm_name, vidDevName)
+    vm_handler = IrcVMHandler(vm_name, vidDevName)
     bot = VMBot(vm_handler, channel, nickname, server, port)
 
     bot.start()
+    
+    #botThread = AsyncThread(bot)
+    #botThread.start()
 
+    
 if __name__ == "__main__":
     main()
