@@ -6,6 +6,8 @@ import threading
 import socket
 import re
 
+# Inspired by this: http://blog.scphillips.com/posts/2012/12/a-simple-python-webserver/
+
 class WebVMHandler(BaseVMHandler, threading.Thread):
 
     def __init__(self, vm_name, port = 8080, vidDevName = None):
@@ -25,11 +27,7 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
             csock, caddr = self.sock.accept()
             print("Connection from: " + `caddr`)
             req = csock.recv(1024) # get the request, 1kB max
-            print(req)
-            # Look in the first line of the request for a move command
-            # A move command should be e.g. 'http://server/move?a=90'
-            #match = re.match('POST.*HTTP/1', req)
-            #if match:
+
             match_args = re.search('arg\=(.*)$', req)
             if match_args:
                 tks = match_args.group(1).split(",")
