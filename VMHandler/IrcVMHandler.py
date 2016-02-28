@@ -3,11 +3,78 @@
 from scancodes import *
 from BaseVMHandler import BaseVMHandler
 
-class IrcVMHandler(BaseVMHandler):
+import irc
+import irc.bot
+import irc.strings
+from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
-    def __init__(self, vm_name, vidDevName = None):
-        super(IrcVMHandler, self).__init__(vm_name, vidDevName)
-        
+irc.client.ServerConnection.buffer_class = irc.buffer.LenientDecodingLineBuffer #To take care of invalid utf-8 codes
+
+class IrcVMHandler(irc.bot.SingleServerIRCBot, BaseVMHandler):
+
+    def __init__(self, vm_name, channel, nickname, server, vidDevName = None, port=6667):
+        BaseVMHandler.__init__(self, vm_name, vidDevName)
+        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
+        self.channel = channel
+        self.command_str = "VMBOT"
+
+    def on_nicknameinuse(self, c, e):
+        c.nick(c.get_nickname() + "_")
+
+    def on_welcome(self, c, e):
+        c.join(self.channel)
+
+    def on_privmsg(self, c, e):
+        nick = e.source.nick
+        text = e.arguments[0]
+        c.notice(nick, text)
+        #self.do_command(e, e.arguments[0])
+
+    def on_pubmsg(self, c, e):
+        self.handle_command(e.arguments[0])
+
+    def on_dccmsg(self, c, e):
+        # non-chat DCC messages are raw bytes; decode as text
+        text = e.arguments[0].decode('utf-8')
+        c.privmsg("You said: " + text)
+
+    def on_dccchat(self, c, e):
+        if len(e.arguments) != 2:
+            return
+        args = e.arguments[1].split()
+        if len(args) == 4:
+            try:
+                address = ip_numstr_to_quad(args[2])
+                port = int(args[3])
+            except ValueError:
+                return
+            self.dcc_connect(address, port)
+
+    def do_command(self, e, cmd):
+        nick = e.source.nick
+        c = self.connection
+
+        if cmd == "disconnect":
+            self.disconnect()
+        elif cmd == "die":
+            self.die()
+        elif cmd == "stats":
+            for chname, chobj in self.channels.items():
+                c.notice(nick, "--- Channel statistics ---")
+                c.notice(nick, "Channel: " + chname)
+                users = sorted(chobj.users())
+                c.notice(nick, "Users: " + ", ".join(users))
+                opers = sorted(chobj.opers())
+                c.notice(nick, "Opers: " + ", ".join(opers))
+                voiced = sorted(chobj.voiced())
+                c.notice(nick, "Voiced: " + ", ".join(voiced))
+        elif cmd == "dcc":
+            dcc = self.dcc_listen()
+            c.ctcp("DCC", nick, "CHAT chat %s %d" % (
+                ip_quad_to_numstr(dcc.localaddress),
+                dcc.localport))
+        else:
+            c.notice(nick, "Not understood: " + cmd)
             
     def handle_command(self, c):
         
@@ -127,7 +194,7 @@ class IrcVMHandler(BaseVMHandler):
             dx = int(tks[0])
             dy = int(tks[1])
 
-            self.mouse.putMouseEvent(dx, dy, 0, 0, 0x00)
+            self.mouse.putMouseEvent(dx, dy, 0, 0, self.mouse_btns)
             
         except ValueError:
             print("Cannot parse MOUSEMOVE parameters as integers.")
@@ -145,8 +212,8 @@ class IrcVMHandler(BaseVMHandler):
             dx = int(tks[0])
             dy = int(tks[1])
 
-            self.mouse.putMouseEventAbsolute(dx, dy, 0, 0, 0x00)
-            self.mouse.putMouseEvent(0, 0, 0, 0, 0x00) # need this so the mouse stays visible
+            self.mouse.putMouseEventAbsolute(dx, dy, 0, 0, self.mouse_btns)
+            self.mouse.putMouseEvent(0, 0, 0, 0, self.mouse_btns) # need this so the mouse stays visible
             
         except ValueError:
             print("Cannot parse MOUSESET parameters as integers.")

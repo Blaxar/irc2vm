@@ -53,20 +53,30 @@ class BaseVMHandler(object):
 
         self.mach = vbox.findMachine(vm_name)
 
-        # Get the session object
+                    # Get the session object
         self.session = mgr.getSessionObject(vbox)
 
-        progress = self.mach.launchVMProcess(self.session, "headless", "")
-        progress.waitForCompletion(-1)
+        #If the machine is already Running
+        if self.mach.state == self.vboxConstants.MachineState_Running:
 
-        # Our session object is ready at this point, the machine is already locked
-        # since we launched it ourselves
+            # Lock the current machine (shared mode, since we won't modify the machine)
+            self.mach.lockMachine(self.session, self.vboxConstants.LockType_Shared)
+
+        #Else, we have to launch the machine first
+        else:
+
+            progress = self.mach.launchVMProcess(self.session, "headless", "")
+            progress.waitForCompletion(-1)
+
+            # Our session object is ready at this point, the machine is already locked
+            # since we launched it ourselves
         
-        if self.mach.state == self.vboxConstants.MachineState_PoweredOff:
-            self.session.console.powerUp()
+            if self.mach.state == self.vboxConstants.MachineState_PoweredOff:
+                self.session.console.powerUp()
 
-        while self.mach.state != self.vboxConstants.MachineState_Running:
-            sleep(0.1)
+            #We wait for the machine to be really running before doing anything else
+            while self.mach.state != self.vboxConstants.MachineState_Running:
+                sleep(0.1)
         
         console = self.session.console
 
@@ -77,7 +87,7 @@ class BaseVMHandler(object):
         # Check if we have a v4l2 device to write to
         if vidDevName != None:
             
-            self.device = open(vidDevName, 'w', 0) # Do not forget the 0 for unbuffered mode RGB(A) won't work otherwise
+            self.device = open(vidDevName, 'w', 0) # Do not forget the 0 for unbuffered mode RGB(A), won't work otherwise
 
             fmt = V4L2_PIX_FMT_BGR32
             
