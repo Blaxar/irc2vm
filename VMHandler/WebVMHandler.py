@@ -44,7 +44,12 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
                         self.mouse.putMouseEventAbsolute(int(float(tks[0])*width), int(float(tks[1])*height), 0, 0, self.mouse_btns)
                         self.mouse.putMouseEvent(0, 0, 0, 0, self.mouse_btns) # need this so the mouse stays visible
 
-                        csock.sendall("""HTTP/1.0 200 OK""")
+                        csock.send(r'''HTTP/1.0 200 OK
+                        Content-Type: text/plain
+
+                        OK
+
+                        ''')
                         
                     except TypeError as ve:
                         print(ve)
