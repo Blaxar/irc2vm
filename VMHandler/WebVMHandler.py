@@ -47,7 +47,7 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
                         csock.send(r'''HTTP/1.0 200 OK
                         Content-Type: text/plain
 
-                        OK
+                        <html><head></head><body>OK</body></html>
 
                         ''')
                         
