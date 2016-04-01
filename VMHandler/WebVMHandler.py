@@ -27,11 +27,11 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
             csock, caddr = self.sock.accept()
             print("Connection from: " + `caddr`)
             req = csock.recv(1024) # get the request, 1kB max
-
-            match_args = re.search('arg\=(.*)$', req)
+            print(req)
+            match_args = re.search('GET /\?arg\=(.*) HTTP/1', req)
             if match_args:
                 tks = match_args.group(1).split(",")
-                print(tks)
+                #print(tks)
                 if len(tks) == 5:
                     try:
                         self.mouse_btns = 0x00
@@ -46,8 +46,6 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
 
                         csock.send(r'''HTTP/1.0 200 OK
                         Content-Type: text/plain
-
-                        <html><head></head><body>OK</body></html>
 
                         ''')
                         
