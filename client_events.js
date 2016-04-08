@@ -87,7 +87,7 @@ var readyClient = function(elem, server_uri)
 		ctx.mouse_y = (event.clientY-rect.top)/parseFloat(rect.height);
 		console.log("mousemove " + ctx.mouse_x + "," + ctx.mouse_y);
 
-		if((Date.now()-ctx.last_move) > 100) //set a minimum 100ms interval between mousemove requests.
+		if((Date.now()-ctx.last_move) > 50) //set a minimum 50ms interval between mousemove requests.
 		{
 			ctx.sendHttpRequest();
 			ctx.last_move = Date.now();
