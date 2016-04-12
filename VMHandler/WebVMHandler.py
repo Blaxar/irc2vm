@@ -6,8 +6,42 @@ import threading
 import socket
 import re
 
+import tornado.websocket
+
 # Inspired by this: http://blog.scphillips.com/posts/2012/12/a-simple-python-webserver/
 
+class WebVMHandler(BaseVMHandler, threading.Thread):
+
+    class WSHandler(tornado.websocket.WebSocketHandler):
+        
+        def open(self):
+            print("WebSocket opened")
+
+        def check_origin(self, origin):
+            return True
+
+        def on_message(self, message):
+            self.write_message(u"You said: " + message)
+
+        def on_close(self):
+            print("WebSocket closed")
+            
+    
+    def __init__(self, vm_name, port = 8080, vidDevName = None):
+        
+        BaseVMHandler.__init__(self, vm_name, vidDevName)
+        threading.Thread.__init__(self)
+        self.port = port
+
+        self.app = tornado.web.Application([(r"/", WebVMHandler.WSHandler)])
+        self.app.listen(self.port)
+
+        
+    def run(self):
+        
+        tornado.ioloop.IOLoop.current().start()
+        
+"""
 class WebVMHandler(BaseVMHandler, threading.Thread):
 
     def __init__(self, vm_name, port = 8080, vidDevName = None):
@@ -56,3 +90,4 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
     def __del__(self):
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
+"""
