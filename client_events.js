@@ -1,6 +1,6 @@
 /* Enable mouse interaction on an overlay div to control the remote virtual machine.
    elem: DOM div element.
-   server_uri: uri to send mouse events to (GET requests).
+   server_uri: uri to send mouse events to (WebSocket).
 */
 var readyClient = function(elem, server_uri)
 {
@@ -18,24 +18,19 @@ var readyClient = function(elem, server_uri)
 	ctx.display_height = 0;
 	ctx.sendReady = true;
 	ctx.last_move = 0;
-
+	ctx.ws = new WebSocket(ctx.uri);
+    ctx.ws.onopen = function() {};
+    ctx.ws.onmessage = function (evt) {};
+	
 	ctx.sendHttpRequest = function()
 	{
 
-		value = "" + ctx.mouse_x + "," + ctx.mouse_y + ","
+		value = "arg=" + ctx.mouse_x + "," + ctx.mouse_y + ","
 			+ ctx.mouse_lbtn_state + ","
 		    + ctx.mouse_mbtn_state + ","
 		    + ctx.mouse_rbtn_state;
 
-		var script = document.getElementById("jsonp");
-		if(script) script.remove();
-		
-		script = document.createElement('script');
-		script.setAttribute('id', "jsonp");
-		script.setAttribute('type', "application/javascript");
-		script.setAttribute('src', ctx.uri+"?arg="+value);
-
-		document.getElementsByTagName('head')[0].appendChild(script);
+		ctx.ws.send(value);
 	
 	}
 
@@ -87,7 +82,7 @@ var readyClient = function(elem, server_uri)
 		ctx.mouse_y = (event.clientY-rect.top)/parseFloat(rect.height);
 		console.log("mousemove " + ctx.mouse_x + "," + ctx.mouse_y);
 
-		if((Date.now()-ctx.last_move) > 50) //set a minimum 50ms interval between mousemove requests.
+		if((Date.now()-ctx.last_move) > 10) //set a minimum 10ms interval between mousemove requests.
 		{
 			ctx.sendHttpRequest();
 			ctx.last_move = Date.now();
