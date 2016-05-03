@@ -28,7 +28,6 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
             
             if match_args:
                 tks = match_args.group(1).split(",")
-                print(tks)
                 if len(tks) == 5:
                     try:
                         self.mouse_btns = 0x00
@@ -55,7 +54,7 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
                 except TypeError as ve:
                     print(ve)
                 except KeyError as ke:
-                    print(ke)
+                    print("KeyError: "+ke)
 
                 return
 
@@ -68,7 +67,7 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
                 except TypeError as ve:
                     print(ve)
                 except KeyError as ke:
-                    print(ke)
+                    print("KeyError: "+ke)
 
                 return
                 
