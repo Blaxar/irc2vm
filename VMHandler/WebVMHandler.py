@@ -11,9 +11,10 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
 
     class WSHandler(tornado.websocket.WebSocketHandler):
 
-        def initialize(self, display, mouse):
+        def initialize(self, display, mouse, keyboard):
             self.display = display
             self.mouse = mouse
+            self.keyboard = keyboard
             
         def open(self):
             print("WebSocket opened")
@@ -23,7 +24,7 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
 
         def on_message(self, message):
             
-            match_args = re.search('arg\=(.*)', message)
+            match_args = re.search('arg\=(.*)', message) #mouse input
             
             if match_args:
                 tks = match_args.group(1).split(",")
@@ -43,6 +44,35 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
                     except TypeError as ve:
                         print(ve)
 
+                return
+
+            match_args = re.search('kd\=(.*)', message) #key down input
+
+            if match_args:
+                key = match_args.group(1)
+                try:
+                    self.keyboard.putScancodes(press(key,qwerty))
+                except TypeError as ve:
+                    print(ve)
+                except KeyError as ke:
+                    print(ke)
+
+                return
+
+            match_args = re.search('ku\=(.*)', message) #key up input
+
+            if match_args:
+                key = match_args.group(1)
+                try:
+                    self.keyboard.putScancodes(release(key,qwerty))
+                except TypeError as ve:
+                    print(ve)
+                except KeyError as ke:
+                    print(ke)
+
+                return
+                
+
         def on_close(self):
             print("WebSocket closed")
             
@@ -54,7 +84,7 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
         self.port = port
 
         self.app = tornado.web.Application([(r"/", WebVMHandler.WSHandler,
-                                            dict(display=self.display,mouse=self.mouse))]) # we need to access display and keyboard from within the WS handler
+                                            dict(display=self.display,mouse=self.mouse,keyboard=self.keyboard))]) # we need to access display and keyboard from within the WS handler
         self.app.listen(self.port)
         
     def run(self):

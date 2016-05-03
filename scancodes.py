@@ -115,6 +115,13 @@ qwerty= {
     '<': (L_SHIFT,0x33,),
     '>': (L_SHIFT,0x34,),
     '?': (L_SHIFT,0x35,),
+    ' ': (SPACE,),
+    'Control': (L_CTRL,),
+    'Alt': (L_ALT,),
+    'Shift': (L_SHIFT,),
+    'Backspace': (BACKSPACE,),
+    'Enter': (ENTER,),
+    'Tab': (TAB,),
     
 }
 

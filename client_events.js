@@ -6,8 +6,9 @@ var readyClient = function(elem, server_uri)
 {
 
 	var ctx = this;
-
+	
 	ctx.uri = server_uri
+	ctx.allowed = true;
 
 	ctx.mouse_lbtn_state = 0;
 	ctx.mouse_mbtn_state = 0;
@@ -89,5 +90,27 @@ var readyClient = function(elem, server_uri)
 		}
 		
 	};
+
+	elem.addEventListener("keydown", function (evt) {
+		evt.preventDefault();
+		evt.stopPropagation();
+		if (evt.repeat != undefined) {
+			ctx.allowed = !evt.repeat;
+		}
+		if (!ctx.allowed) return;
+		ctx.allowed = false;
+		if (evt.key !== undefined) {console.log("down " + evt.key); ctx.ws.send("kd="+evt.key);}
+	}, false);
+
+	elem.addEventListener("keyup", function (evt) {
+		evt.preventDefault();
+		evt.stopPropagation();
+		ctx.allowed = true;
+		if (evt.key !== undefined) {console.log("up " + evt.key); ctx.ws.send("ku="+evt.key);}
+	}, false);
+
+	elem.focus(function(e) { 
+		ctx.allowed = true;
+	});
 	
 };
