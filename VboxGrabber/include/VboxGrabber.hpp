@@ -28,7 +28,7 @@ class VboxGrabber
 
     public:
 	
-    VboxGrabber(std::string vmName, uint8_t screenID = 0,
+    VboxGrabber(std::string vmName, uint8_t screenID = 0, std::string dev,
 				IFramebuffer* frameBuffer = NULL,
 				PRUint32 format=BitmapFormat_RGBA);
     ~VboxGrabber();
@@ -36,6 +36,8 @@ class VboxGrabber
     uint32_t grab(uint8_t** data, uint16_t width, uint16_t height);
 
     protected:
+
+	std::string _dev;
 
 	PRUint32 _format;
 	uint8_t _screenID;

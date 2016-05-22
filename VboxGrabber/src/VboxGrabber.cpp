@@ -1,9 +1,61 @@
 #include <VboxGrabber.hpp>
 
+extern "C"{
+	
+#include <fcntl.h>              /* low-level i/o */
+#include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
+	
+}
+
 VboxGrabber::VboxGrabber(std::string vmName, uint8_t screenID, IFramebuffer* frameBuffer, PRUint32 format):
-	_screenID(screenID), _frameBuffer(frameBuffer), _format(format)
+	_screenID(screenID), _dev(dev), _frameBuffer(frameBuffer), _format(format)
 {
 
+	//Video output handling
+
+    struct stat st;
+
+    if (-1 == stat(_dev.c_str(), &st)) {
+        fprintf(stderr, "Cannot identify '%s': %d, %s\n",
+                _dev.c_str(), errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    if (!S_ISCHR(st.st_mode)) {
+        fprintf(stderr, "%s is no device\n", _dev.c_str());
+        exit(EXIT_FAILURE);
+    }
+
+    fd = c_open(_dev.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
+
+    if (-1 == fd) {
+        fprintf(stderr, "Cannot open '%s': %d, %s\n",
+                _dev.c_str(), errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+	struct v4l2_capability cap;
+    struct v4l2_cropcap cropcap;
+    struct v4l2_crop crop;
+    struct v4l2_format fmt;
+    unsigned int min;
+
+    if (-1 == xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
+        if (EINVAL == errno) {
+            fprintf(stderr, "%s is no V4L2 device\n",
+                    dev_name);
+            exit(EXIT_FAILURE);
+        } else {
+            errno_exit("VIDIOC_QUERYCAP");
+        }
+    }
+	
+	//Virtual Machine handling
 	nsresult rc;
 	
 	if (sizeof(PRUnichar) != sizeof(wchar_t))

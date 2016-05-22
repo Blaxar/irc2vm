@@ -12,8 +12,10 @@ using namespace std::this_thread;
 int main(int argc, char* argv[])
 {
 
+	uint32_t dstWidth = 1024, dstHeight = 768;
+	
 	std::cout << "Starting VM..." << std::endl;
-	VboxGrabber grabber("Small Windows XP", 0, new V4l2FrameBuffer());
+	VboxGrabber grabber("Small Windows XP", 0, new V4l2FrameBuffer(dstWidth, dstHeight));
 
 	uint8_t* data = (uint8_t*) malloc(800*600*4*sizeof(uint8_t));
 
@@ -24,7 +26,7 @@ int main(int argc, char* argv[])
 	std::cout << "Starting frame grabing." << std::endl;
 	
 	while( (last-start).count() < 100000){
-		grabber.grab(&data, 800, 600);
+		grabber.grab(&data, dstWidth, dstHeight);
 		last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
 		nbFrames++;
 	}
