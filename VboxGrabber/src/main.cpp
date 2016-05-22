@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <VboxGrabber.hpp>
+#include <V4l2FrameBuffer.hpp>
 #include <chrono>
 #include <thread>
 #include <iostream>
@@ -12,7 +13,7 @@ int main(int argc, char* argv[])
 {
 
 	std::cout << "Starting VM..." << std::endl;
-	VboxGrabber grabber("Small Windows XP");
+	VboxGrabber grabber("Small Windows XP", 0, new V4l2FrameBuffer());
 
 	uint8_t* data = (uint8_t*) malloc(800*600*4*sizeof(uint8_t));
 
@@ -22,13 +23,13 @@ int main(int argc, char* argv[])
 	
 	std::cout << "Starting frame grabing." << std::endl;
 	
-	while( (last-start).count() < 1000){
+	while( (last-start).count() < 100000){
 		grabber.grab(&data, 800, 600);
 		last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
 		nbFrames++;
 	}
 	
-	std::cout << "Grabbed " << nbFrames << " frames in 1 second." << std::endl;
+	std::cout << "Grabbed " << nbFrames << " frames in 100 seconds." << std::endl;
 	free(data);
 	return 0;
 	

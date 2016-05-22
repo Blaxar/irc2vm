@@ -1,6 +1,7 @@
 #include <VboxGrabber.hpp>
 
-VboxGrabber::VboxGrabber(std::string vmName, PRUint32 format): _format(format)
+VboxGrabber::VboxGrabber(std::string vmName, uint8_t screenID, IFramebuffer* frameBuffer, PRUint32 format):
+	_screenID(screenID), _frameBuffer(frameBuffer), _format(format)
 {
 
 	nsresult rc;
@@ -105,15 +106,16 @@ VboxGrabber::VboxGrabber(std::string vmName, PRUint32 format): _format(format)
 
 		_session->GetConsole(&_console);
 		_console->GetDisplay(&_display);
+		if(_frameBuffer != NULL) _display->AttachFramebuffer(_screenID, _frameBuffer, &_frameBufferID);
 
 	}
 
 }
 
-PRUint32 VboxGrabber::grab(uint8_t** data, uint16_t width, uint16_t height, uint8 screenID)
+uint32_t VboxGrabber::grab(uint8_t** data, uint16_t width, uint16_t height)
 {
 	PRUint32 size;
-	_display->TakeScreenShotToArray(0, width, height, _format, &size, data);
+	_display->TakeScreenShotToArray(_screenID, width, height, _format, &size, data);
     _eventQ->ProcessPendingEvents();
 
 	return size;

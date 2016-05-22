@@ -28,14 +28,17 @@ class VboxGrabber
 
     public:
 	
-    VboxGrabber(std::string vmName, PRUint32 format=BitmapFormat_RGBA);
+    VboxGrabber(std::string vmName, uint8_t screenID = 0,
+				IFramebuffer* frameBuffer = NULL,
+				PRUint32 format=BitmapFormat_RGBA);
     ~VboxGrabber();
 
-    PRUint32 grab(uint8_t** data, uint16_t width, uint16_t height, uint8 screenID = 0);
+    uint32_t grab(uint8_t** data, uint16_t width, uint16_t height);
 
     protected:
 
 	PRUint32 _format;
+	uint8_t _screenID;
 	
 	nsCOMPtr<nsIServiceManager> _serviceManager;
 	nsCOMPtr<nsIEventQueue> _eventQ;
@@ -46,6 +49,8 @@ class VboxGrabber
     IConsole* _console;
 	
 	IDisplay* _display;
+    IFramebuffer* _frameBuffer;
+    PRUnichar* _frameBufferID;
 	
 };
 
