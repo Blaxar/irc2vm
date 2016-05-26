@@ -42,6 +42,17 @@ _capabilities(FramebufferCapabilities_UpdateImage)
     av_image_alloc(_dstFrame->data, _dstFrame->linesize,
                    _dstWidth, _dstHeight,
                    _vbox2ffmpeg[_dstPixelFormat], 1);
+	
+	_frameData = (uint8_t*) malloc(_dstWidth*_dstHeight*4*sizeof(uint8_t));
+}
+
+uint32_t V4l2FrameBuffer::fetch(uint8_t** data)
+{
+	uint32_t data_size = _dstWidth*_dstHeight*4*sizeof(uint8_t);
+	*data = (uint8_t*)malloc(data_size);
+	printf("data size: %d\n", data_size);
+	memcpy(*data, _frameData, data_size);
+	return data_size;
 }
 
 V4l2FrameBuffer::~V4l2FrameBuffer()
@@ -133,6 +144,8 @@ NS_IMETHODIMP V4l2FrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint3
 		
 		sws_scale(_swsCtx, (const uint8_t * const*)_srcFrame->data, _srcFrame->linesize,
 				  0, _srcHeight, _dstFrame->data, _dstFrame->linesize);
+		avpicture_layout((AVPicture*)_dstFrame, _dstPixelFormat, _dstWidth, _dstHeight,
+						 (uint8_t*) _frameData, sizeof(*_frameData));
 	}
 	
 	_count++;
@@ -190,7 +203,7 @@ void V4l2FrameBuffer::updateCtx(uint32_t width, uint32_t height)
 		_srcPixelFormat = _vbox2ffmpeg[pxFmt];
 		_srcWidth = width;
 		_srcHeight = height;
-
+		
 		if(_srcFrame != NULL) free(_srcFrame);
 		_srcFrame = av_frame_alloc();
 		av_image_alloc(_srcFrame->data, _srcFrame->linesize,

@@ -14,31 +14,29 @@ extern "C"{
 
 }
 
-/*
- * VirtualBox XPCOM interface. This header is generated
- * from IDL which in turn is generated from a custom XML format.
- */
-#include <VirtualBox_XPCOM.h>
+#include <IFramebufferPlus.hpp>
 
-/* Header file */
-class V4l2FrameBuffer : public IFramebuffer
+class V4l2FrameBuffer : public IFramebufferPlus
 {
 public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_IFRAMEBUFFER
-
+	NS_DECL_ISUPPORTS
+	NS_DECL_IFRAMEBUFFER
+	
     V4l2FrameBuffer(uint32_t dstWidth, uint32_t dstHeight,
 				    AVPixelFormat dstPixelFormat = AV_PIX_FMT_RGB0);
 
+    uint32_t fetch(uint8_t** data);
+	
 private:
+	
     ~V4l2FrameBuffer();
 
 protected:
 
 	void updateCtx(uint32_t width, uint32_t height);
-	
+
+	const uint32_t _dstWidth, _dstHeight;
     uint32_t _srcWidth, _srcHeight;
-	uint32_t _dstWidth, _dstHeight;
 	PRUint32 _bitsPerPixel;
 	PRUint32 _capabilities;
 
@@ -49,6 +47,8 @@ protected:
 	AVFrame* _srcFrame;
 	AVFrame* _dstFrame;
 	struct SwsContext *_swsCtx;
+
+    uint8_t* _frameData;
 	
 };
 

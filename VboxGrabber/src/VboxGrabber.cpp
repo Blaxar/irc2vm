@@ -1,7 +1,8 @@
 #include <VboxGrabber.hpp>
 
 extern "C"{
-	
+
+#include <assert.h>
 #include <fcntl.h>              /* low-level i/o */
 #include <unistd.h>
 #include <errno.h>
@@ -12,48 +13,10 @@ extern "C"{
 	
 }
 
-VboxGrabber::VboxGrabber(std::string vmName, uint8_t screenID, IFramebuffer* frameBuffer, PRUint32 format):
-	_screenID(screenID), _dev(dev), _frameBuffer(frameBuffer), _format(format)
+VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height, IFramebufferPlus* frameBuffer, uint8_t screenID, PRUint32 format):
+	_screenID(screenID), _dev(dev), _width(width), _height(height),
+	_frameBuffer(frameBuffer), _format(format)
 {
-
-	//Video output handling
-
-    struct stat st;
-
-    if (-1 == stat(_dev.c_str(), &st)) {
-        fprintf(stderr, "Cannot identify '%s': %d, %s\n",
-                _dev.c_str(), errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    if (!S_ISCHR(st.st_mode)) {
-        fprintf(stderr, "%s is no device\n", _dev.c_str());
-        exit(EXIT_FAILURE);
-    }
-
-    fd = c_open(_dev.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
-
-    if (-1 == fd) {
-        fprintf(stderr, "Cannot open '%s': %d, %s\n",
-                _dev.c_str(), errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-	struct v4l2_capability cap;
-    struct v4l2_cropcap cropcap;
-    struct v4l2_crop crop;
-    struct v4l2_format fmt;
-    unsigned int min;
-
-    if (-1 == xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
-        if (EINVAL == errno) {
-            fprintf(stderr, "%s is no V4L2 device\n",
-                    dev_name);
-            exit(EXIT_FAILURE);
-        } else {
-            errno_exit("VIDIOC_QUERYCAP");
-        }
-    }
 	
 	//Virtual Machine handling
 	nsresult rc;
@@ -164,10 +127,14 @@ VboxGrabber::VboxGrabber(std::string vmName, uint8_t screenID, IFramebuffer* fra
 
 }
 
-uint32_t VboxGrabber::grab(uint8_t** data, uint16_t width, uint16_t height)
+uint32_t VboxGrabber::grab()
 {
 	PRUint32 size;
-	_display->TakeScreenShotToArray(_screenID, width, height, _format, &size, data);
+	//_display->TakeScreenShotToArray(_screenID, _width, _height, _format, &size, data);
+	uint8_t* data;
+	size = _frameBuffer->fetch(&data);
+    _v4l2device->write((const void*) data, size);
+	free(data);
     _eventQ->ProcessPendingEvents();
 
 	return size;
@@ -179,4 +146,5 @@ VboxGrabber::~VboxGrabber()
 	PRUint32 state; _session->GetState(&state);
 	if(state == SessionState_Locked) _session->UnlockMachine();
 	if(_machine) _machine->Release();
+
 }
