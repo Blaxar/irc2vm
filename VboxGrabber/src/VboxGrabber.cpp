@@ -1,4 +1,5 @@
 #include <VboxGrabber.hpp>
+#include <V4l2deviceMmap.hpp>
 
 extern "C"{
 
@@ -17,6 +18,10 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 	_screenID(screenID), _dev(dev), _width(width), _height(height),
 	_frameBuffer(frameBuffer), _format(format)
 {
+
+	//V4l2 device
+	_v4l2device = new V4l2deviceMmap("/dev/video10", width, height);
+	_v4l2device->open();
 	
 	//Virtual Machine handling
 	nsresult rc;
@@ -146,5 +151,7 @@ VboxGrabber::~VboxGrabber()
 	PRUint32 state; _session->GetState(&state);
 	if(state == SessionState_Locked) _session->UnlockMachine();
 	if(_machine) _machine->Release();
+
+	_v4l2device->close();
 
 }

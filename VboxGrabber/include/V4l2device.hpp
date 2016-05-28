@@ -31,7 +31,7 @@ class V4l2device
     public:
 	
     V4l2device(std::string dev, uint32_t width, uint32_t height):
-		_dev(dev), _width(width), _height(height) {}
+		_dev(dev), _width(width), _height(height), force_format(true) {}
 	
     virtual ~V4l2device(){}
 
@@ -79,7 +79,7 @@ class V4l2device
 		
 	}
     
-	void write(const void* data, ssize_t size){  }
+	virtual void write(const void* data, ssize_t size) = 0;
 
     protected:
 

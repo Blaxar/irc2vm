@@ -23,36 +23,47 @@ extern "C"{
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
+#include <assert.h>
+
 }
 
 NS_IMPL_ISUPPORTS1(V4l2FrameBuffer, IFramebuffer)
 
 V4l2FrameBuffer::V4l2FrameBuffer(uint32_t dstWidth, uint32_t dstHeight, AVPixelFormat dstPixelFormat):
 _dstWidth(dstWidth), _dstHeight(dstHeight), _srcWidth(0), _srcHeight(0),
-_dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL),
-_capabilities(FramebufferCapabilities_UpdateImage)
+_dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL), _src(NULL),
+	_capabilities(FramebufferCapabilities_UpdateImage), _count(0)
 {
 
 	_vbox2ffmpeg.insert(std::pair<PRUint32, AVPixelFormat>
-						(BitmapFormat_RGBA, AV_PIX_FMT_RGB0));
+						(BitmapFormat_RGBA, AV_PIX_FMT_RGB32));
 	_vbox2ffmpeg.insert(std::pair<PRUint32, AVPixelFormat>
-						(BitmapFormat_RGBA, AV_PIX_FMT_BGR0));
-	
+						(BitmapFormat_BGRA, AV_PIX_FMT_BGR32));
+	_bitsPerPixel = 32;
     _dstFrame = av_frame_alloc();
     av_image_alloc(_dstFrame->data, _dstFrame->linesize,
                    _dstWidth, _dstHeight,
-                   _vbox2ffmpeg[_dstPixelFormat], 1);
-	
-	_frameData = (uint8_t*) malloc(_dstWidth*_dstHeight*4*sizeof(uint8_t));
+                   _dstPixelFormat, 16);
+
+	_frameSize = _dstWidth*_dstHeight*4*sizeof(uint8_t);
+	_frameData = (uint8_t*) malloc(_frameSize);
 }
 
 uint32_t V4l2FrameBuffer::fetch(uint8_t** data)
 {
-	uint32_t data_size = _dstWidth*_dstHeight*4*sizeof(uint8_t);
-	*data = (uint8_t*)malloc(data_size);
-	printf("data size: %d\n", data_size);
-	memcpy(*data, _frameData, data_size);
-	return data_size;
+	
+	*data = (uint8_t*)malloc(_frameSize);
+	memcpy(*data, _frameData, _frameSize);
+	/*
+	for(int x=0; x<_dstWidth; x++)
+		for(int y=0; y<_dstHeight; y++)
+		{
+			(*data)[(y*_dstWidth+x)*4+0]=(x/(float)_dstWidth)*255;
+			(*data)[(y*_dstWidth+x)*4+1]=(y/(float)_dstWidth)*255;
+		} */
+	
+	return _frameSize;
+	
 }
 
 V4l2FrameBuffer::~V4l2FrameBuffer()
@@ -93,7 +104,7 @@ NS_IMETHODIMP V4l2FrameBuffer::GetBytesPerLine(PRUint32 *aBytesPerLine)
 /* readonly attribute PRUint32 pixelFormat; */
 NS_IMETHODIMP V4l2FrameBuffer::GetPixelFormat(PRUint32 *aPixelFormat)
 {
-	*aPixelFormat = BitmapFormat_RGBA;
+	*aPixelFormat = BitmapFormat_BGRA;
     return NS_OK;
 }
 
@@ -133,21 +144,22 @@ NS_IMETHODIMP V4l2FrameBuffer::NotifyUpdate(PRUint32 x, PRUint32 y, PRUint32 wid
 /* void notifyUpdateImage (in unsigned long x, in unsigned long y, in unsigned long width, in unsigned long height, in unsigned long imageSize, [array, size_is (imageSize)] in octet image); */
 NS_IMETHODIMP V4l2FrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint32 width, PRUint32 height, PRUint32 imageSize, PRUint8 *image)
 {
-    static uint16_t _count = 0;
-	//std::cout << "Image(" << _count << "): "<< "x: " << x << " y: " << y << " width: " << width << " height: " << height << std::endl;
-	
-	updateCtx(width, height);
-	
+
 	if(_swsCtx != NULL){
-		avpicture_fill((AVPicture*) _srcFrame, (uint8_t*)image,
-                       _srcPixelFormat, _srcWidth, _srcHeight);
+		
+		if(_srcWidth == width && _srcHeight == height)
+			memcpy(_src, image, imageSize);
+        else
+			for(int r=0; r<height; r++)
+				memcpy(&_src[((y+r)*_srcWidth+x)*4], &image[r*width*4], width*4);
+		
+		av_image_fill_arrays(_srcFrame->data, _srcFrame->linesize, _src, _srcPixelFormat, _srcWidth, _srcHeight, 16);
 		
 		sws_scale(_swsCtx, (const uint8_t * const*)_srcFrame->data, _srcFrame->linesize,
 				  0, _srcHeight, _dstFrame->data, _dstFrame->linesize);
-		avpicture_layout((AVPicture*)_dstFrame, _dstPixelFormat, _dstWidth, _dstHeight,
-						 (uint8_t*) _frameData, sizeof(*_frameData));
+
+		av_image_copy_to_buffer(_frameData, _frameSize, _dstFrame->data, _dstFrame->linesize, _dstPixelFormat, _dstWidth, _dstHeight, 16);
 	}
-	
 	_count++;
     return NS_OK;
 }
@@ -155,7 +167,6 @@ NS_IMETHODIMP V4l2FrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint3
 /* void notifyChange (in unsigned long screenId, in unsigned long xOrigin, in unsigned long yOrigin, in unsigned long width, in unsigned long height); */
 NS_IMETHODIMP V4l2FrameBuffer::NotifyChange(PRUint32 screenId, PRUint32 xOrigin, PRUint32 yOrigin, PRUint32 width, PRUint32 height)
 {
-    std::cout << "Change: "<< "xOrigin: " << xOrigin << " yOrigin: " << yOrigin << " width: " << width << " height: " << height << std::endl;
 
 	updateCtx(width, height);
 	
@@ -198,17 +209,21 @@ void V4l2FrameBuffer::updateCtx(uint32_t width, uint32_t height)
 
 	if(width != _srcWidth || height != _srcHeight)
 	{
+		
 		PRUint32 pxFmt;
 		GetPixelFormat(&pxFmt);
 		_srcPixelFormat = _vbox2ffmpeg[pxFmt];
 		_srcWidth = width;
 		_srcHeight = height;
+
+		if(_src != NULL) free(_src);
+		_src = (uint8_t*) malloc(_srcWidth*_srcHeight*4);
 		
 		if(_srcFrame != NULL) free(_srcFrame);
 		_srcFrame = av_frame_alloc();
 		av_image_alloc(_srcFrame->data, _srcFrame->linesize,
 					   _srcWidth, _srcHeight,
-					   _vbox2ffmpeg[pxFmt], 1);
+					   _srcPixelFormat, 16);
 		
 		if(_swsCtx != NULL) sws_freeContext(_swsCtx);
 		_swsCtx = sws_getContext(_srcWidth, _srcHeight, _srcPixelFormat,
