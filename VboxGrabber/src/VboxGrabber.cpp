@@ -14,9 +14,11 @@ extern "C"{
 	
 }
 
+using namespace std;
+
 VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height, IFramebufferPlus* frameBuffer, uint8_t screenID, PRUint32 format):
 	_screenID(screenID), _dev(dev), _width(width), _height(height),
-	_frameBuffer(frameBuffer), _format(format)
+     _frameBuffer(frameBuffer), _format(format)
 {
 
 	//V4l2 device
@@ -27,27 +29,19 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 	nsresult rc;
 	
 	if (sizeof(PRUnichar) != sizeof(wchar_t))
-    {
-        printf("Error: sizeof(PRUnichar) {%lu} != sizeof(wchar_t) {%lu}!\n"
-               "Probably, you forgot the -fshort-wchar compiler option.\n",
-               (unsigned long) sizeof(PRUnichar),
-               (unsigned long) sizeof(wchar_t));
-        return;
-    }
+        throw VboxGrabberException("Error: sizeof(PRUnichar) {"+to_string((unsigned long) sizeof(PRUnichar))+
+								   "} != sizeof(wchar_t) {"+to_string((unsigned long) sizeof(wchar_t))+"}!\n"
+								   "Probably, you forgot the -fshort-wchar compiler option.\n");
+
 
     rc = NS_InitXPCOM2(getter_AddRefs(_serviceManager), nsnull, nsnull);
     if (NS_FAILED(rc))
-    {
-        printf("Error: XPCOM could not be initialized! rc=%#x\n", rc);
-        return;
-    }
+		throw VboxGrabberException("Error: XPCOM could not be initialized! rc="+to_string(rc));
 
     rc = NS_GetMainEventQ(getter_AddRefs(_eventQ));
     if (NS_FAILED(rc))
-    {
-        printf("Error: could not get main event queue! rc=%#x\n", rc);
-        return;
-    }
+        throw VboxGrabberException("Error: could not get main event queue! rc="+to_string(rc));
+
 
         /*
          * Now XPCOM is ready and we can start to do real work.
@@ -59,20 +53,15 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
          */
     rc = NS_GetComponentManager(getter_AddRefs(_manager));
     if (NS_FAILED(rc))
-    {
-        printf("Error: could not get component manager! rc=%#x\n", rc);
-        return;
-    }
+        throw VboxGrabberException("Error: could not get component manager! rc="+to_string(rc));
 
     rc = _manager->CreateInstanceByContractID(NS_VIRTUALBOX_CONTRACTID,
                                              nsnull,
                                              NS_GET_IID(IVirtualBox),
                                              getter_AddRefs(_virtualBox));
     if (NS_FAILED(rc))
-    {
-        printf("Error, could not instantiate VirtualBox object! rc=%#x\n", rc);
-        return;
-    }
+        throw VboxGrabberException("Error, could not instantiate VirtualBox object! rc="+to_string(rc));
+
 
 	nsAutoString nsVmName;
 	nsVmName.AssignWithConversion(vmName.c_str(), vmName.length());
@@ -85,27 +74,19 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 		_machine->GetAccessible(&isAccessible);
 					
 		if (NS_FAILED(rc))
-		{
-			printf("Error: could not get component manager! rc=%#x\n", rc);
-			return;
-		}
+		    throw VboxGrabberException("Error: could not get component manager! rc="+to_string(rc));
+
 		rc = _manager->CreateInstanceByContractID(NS_SESSION_CONTRACTID,
 												 nsnull,
 												 NS_GET_IID(ISession),
 												 getter_AddRefs(_session));
 		
 		if (NS_FAILED(rc))
-		{
-			printf("Error, could not instantiate session object! rc=%#x\n", rc);
-			return;
-		}
+		    throw VboxGrabberException("Error, could not instantiate session object! rc="+to_string(rc));
 
 		//rc = _machine->LockMachine(_session, LockType_Shared);
 		if (NS_FAILED(rc))
-		{
-			printf("Error, could not lock the machine for the session! rc=%#x\n", rc);
-			return;
-		}
+			throw VboxGrabberException("Error, could not lock the machine for the session! rc="+to_string(rc));
 
 		nsCOMPtr<IProgress> pProgress;
 		rc = _machine->LaunchVMProcess(_session, NS_LITERAL_STRING("headless").get(),
@@ -113,21 +94,22 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 									  getter_AddRefs(pProgress));
 
 		if (NS_FAILED(rc))
-			printf("Failed to launch machine! rc=%#x\n", rc);
+		    throw VboxGrabberException("Failed to launch machine! rc="+to_string(rc));
 		else
 		{
 			rc = pProgress->WaitForCompletion(-1);
 			PRInt32 resultCode;
 			pProgress->GetResultCode(&resultCode);
 			if (NS_FAILED(rc) || NS_FAILED(resultCode))
-				printf("Failed to launch machine! rc=%#x\n",
-					   NS_FAILED(rc) ? rc : resultCode);
+			    throw VboxGrabberException("Failed to launch machine! rc="+
+										   to_string(NS_FAILED(rc) ? rc : resultCode));
 		}
 
 		_session->GetConsole(&_console);
 		_console->GetDisplay(&_display);
 		if(_frameBuffer != NULL) _display->AttachFramebuffer(_screenID, _frameBuffer, &_frameBufferID);
-
+		else throw VboxGrabberException("Failed to attach framebuffer (NULL).");
+		
 	}
 
 }

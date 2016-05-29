@@ -15,10 +15,6 @@ class V4l2deviceMmap: public V4l2device
     protected:
 
 	void write(const void* data, ssize_t size);
-	
-    void write_image(const void *p, int size, void* data);
-
-    int write_frame(const void* data);
 
     void uninit_device(void);
 

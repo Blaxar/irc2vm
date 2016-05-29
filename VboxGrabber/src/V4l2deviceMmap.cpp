@@ -78,16 +78,6 @@ void V4l2deviceMmap::write(const void* data, ssize_t size)
 	
 }
 
-void V4l2deviceMmap::write_image(const void *p, int size, void* data)
-{
-
-}
-
-int V4l2deviceMmap::write_frame(const void* data)
-{
-	return 0;
-}
-
 void V4l2deviceMmap::uninit_device(void)
 {
 

@@ -1,5 +1,5 @@
-#ifndef V4L2FRAMEBUFFER_HPP
-#define V4L2FRAMEBUFFER_HPP
+#ifndef AVFRAMEBUFFER_HPP
+#define AVFRAMEBUFFER_HPP
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,20 +16,20 @@ extern "C"{
 
 #include <IFramebufferPlus.hpp>
 
-class V4l2FrameBuffer : public IFramebufferPlus
+class AvFrameBuffer : public IFramebufferPlus
 {
 public:
 	NS_DECL_ISUPPORTS
 	NS_DECL_IFRAMEBUFFER
 	
-    V4l2FrameBuffer(uint32_t dstWidth, uint32_t dstHeight,
+    AvFrameBuffer(uint32_t dstWidth, uint32_t dstHeight,
 				    AVPixelFormat dstPixelFormat = AV_PIX_FMT_RGB32);
 
     uint32_t fetch(uint8_t** data);
 	
 private:
 	
-    ~V4l2FrameBuffer();
+    ~AvFrameBuffer();
 
 protected:
 
@@ -56,4 +56,4 @@ protected:
 	
 };
 
-#endif //V4L2FRAMEBUFFER_HPP
+#endif //AVFRAMEBUFFER_HPP

@@ -25,6 +25,17 @@ static ssize_t c_write(int fd, void *buf, size_t count){return write(fd, buf, co
 
 }
 
+class V4l2deviceException : public std::exception {
+  private:
+    std::string err_msg;
+
+  public:
+    V4l2deviceException(const char *msg) : err_msg(msg) {};
+	V4l2deviceException(const std::string msg) : err_msg(msg) {};
+    ~V4l2deviceException() throw() {};
+    const char *what() const throw() { return this->err_msg.c_str(); };
+};
+
 class V4l2device
 {
 
@@ -99,8 +110,7 @@ class V4l2device
 
     void errno_exit(const char *s)
 	{
-        fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
-        exit(EXIT_FAILURE);
+		throw V4l2deviceException(std::string(s)+" error "+std::to_string(errno)+", "+strerror(errno));
 	}
 
     int xioctl(int fh, int request, void *arg)
@@ -113,10 +123,6 @@ class V4l2device
 
         return r;
 	}
-
-    virtual void write_image(const void *p, int size, void* data) = 0;
-
-    virtual int write_frame(const void* data) = 0;
 
     virtual void uninit_device(void) = 0;
 

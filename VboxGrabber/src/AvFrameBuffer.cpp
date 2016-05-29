@@ -1,4 +1,4 @@
-#include <V4l2FrameBuffer.hpp>
+#include <AvFrameBuffer.hpp>
 #include <iostream>
 
 extern "C"{
@@ -27,9 +27,9 @@ extern "C"{
 
 }
 
-NS_IMPL_ISUPPORTS1(V4l2FrameBuffer, IFramebuffer)
+NS_IMPL_ISUPPORTS1(AvFrameBuffer, IFramebuffer)
 
-V4l2FrameBuffer::V4l2FrameBuffer(uint32_t dstWidth, uint32_t dstHeight, AVPixelFormat dstPixelFormat):
+AvFrameBuffer::AvFrameBuffer(uint32_t dstWidth, uint32_t dstHeight, AVPixelFormat dstPixelFormat):
 _dstWidth(dstWidth), _dstHeight(dstHeight), _srcWidth(0), _srcHeight(0),
 _dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL), _src(NULL),
 	_capabilities(FramebufferCapabilities_UpdateImage), _count(0)
@@ -49,7 +49,7 @@ _dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL)
 	_frameData = (uint8_t*) malloc(_frameSize);
 }
 
-uint32_t V4l2FrameBuffer::fetch(uint8_t** data)
+uint32_t AvFrameBuffer::fetch(uint8_t** data)
 {
 	
 	*data = (uint8_t*)malloc(_frameSize);
@@ -66,7 +66,7 @@ uint32_t V4l2FrameBuffer::fetch(uint8_t** data)
 	
 }
 
-V4l2FrameBuffer::~V4l2FrameBuffer()
+AvFrameBuffer::~AvFrameBuffer()
 {
     if(_swsCtx != NULL) sws_freeContext(_swsCtx);
     if(_srcFrame != NULL) av_frame_free(&_srcFrame);
@@ -74,60 +74,60 @@ V4l2FrameBuffer::~V4l2FrameBuffer()
 }
 
 /* readonly attribute unsigned long width; */
-NS_IMETHODIMP V4l2FrameBuffer::GetWidth(PRUint32 *aWidth)
+NS_IMETHODIMP AvFrameBuffer::GetWidth(PRUint32 *aWidth)
 {
 	*aWidth = _srcWidth;
     return NS_OK;
 }
 
 /* readonly attribute unsigned long height; */
-NS_IMETHODIMP V4l2FrameBuffer::GetHeight(PRUint32 *aHeight)
+NS_IMETHODIMP AvFrameBuffer::GetHeight(PRUint32 *aHeight)
 {
 	*aHeight = _srcHeight;
     return NS_OK;
 }
 
 /* readonly attribute unsigned long bitsPerPixel; */
-NS_IMETHODIMP V4l2FrameBuffer::GetBitsPerPixel(PRUint32 *aBitsPerPixel)
+NS_IMETHODIMP AvFrameBuffer::GetBitsPerPixel(PRUint32 *aBitsPerPixel)
 {
 	*aBitsPerPixel = _bitsPerPixel;
     return NS_OK;
 }
 
 /* readonly attribute unsigned long bytesPerLine; */
-NS_IMETHODIMP V4l2FrameBuffer::GetBytesPerLine(PRUint32 *aBytesPerLine)
+NS_IMETHODIMP AvFrameBuffer::GetBytesPerLine(PRUint32 *aBytesPerLine)
 {
 	*aBytesPerLine = (_srcWidth*_bitsPerPixel)/8;
     return NS_OK;
 }
 
 /* readonly attribute PRUint32 pixelFormat; */
-NS_IMETHODIMP V4l2FrameBuffer::GetPixelFormat(PRUint32 *aPixelFormat)
+NS_IMETHODIMP AvFrameBuffer::GetPixelFormat(PRUint32 *aPixelFormat)
 {
 	*aPixelFormat = BitmapFormat_BGRA;
     return NS_OK;
 }
 
 /* readonly attribute unsigned long heightReduction; */
-NS_IMETHODIMP V4l2FrameBuffer::GetHeightReduction(PRUint32 *aHeightReduction)
+NS_IMETHODIMP AvFrameBuffer::GetHeightReduction(PRUint32 *aHeightReduction)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /* readonly attribute IFramebufferOverlay overlay; */
-NS_IMETHODIMP V4l2FrameBuffer::GetOverlay(IFramebufferOverlay **aOverlay)
+NS_IMETHODIMP AvFrameBuffer::GetOverlay(IFramebufferOverlay **aOverlay)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /* readonly attribute long long winId; */
-NS_IMETHODIMP V4l2FrameBuffer::GetWinId(PRInt64 *aWinId)
+NS_IMETHODIMP AvFrameBuffer::GetWinId(PRInt64 *aWinId)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /* void getCapabilities (out unsigned long capabilitiesSize, [array, size_is (capabilitiesSize), retval] out PRUint32 capabilities); */
-NS_IMETHODIMP V4l2FrameBuffer::GetCapabilities(PRUint32 *capabilitiesSize, PRUint32 **capabilities)
+NS_IMETHODIMP AvFrameBuffer::GetCapabilities(PRUint32 *capabilitiesSize, PRUint32 **capabilities)
 {
 	*capabilities = new PRUint32;
 	**capabilities = _capabilities;
@@ -136,13 +136,13 @@ NS_IMETHODIMP V4l2FrameBuffer::GetCapabilities(PRUint32 *capabilitiesSize, PRUin
 }
 
 /* void notifyUpdate (in unsigned long x, in unsigned long y, in unsigned long width, in unsigned long height); */
-NS_IMETHODIMP V4l2FrameBuffer::NotifyUpdate(PRUint32 x, PRUint32 y, PRUint32 width, PRUint32 height)
+NS_IMETHODIMP AvFrameBuffer::NotifyUpdate(PRUint32 x, PRUint32 y, PRUint32 width, PRUint32 height)
 {
     return NS_ERROR_NOT_AVAILABLE;
 }
 
 /* void notifyUpdateImage (in unsigned long x, in unsigned long y, in unsigned long width, in unsigned long height, in unsigned long imageSize, [array, size_is (imageSize)] in octet image); */
-NS_IMETHODIMP V4l2FrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint32 width, PRUint32 height, PRUint32 imageSize, PRUint8 *image)
+NS_IMETHODIMP AvFrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint32 width, PRUint32 height, PRUint32 imageSize, PRUint8 *image)
 {
 
 	if(_swsCtx != NULL){
@@ -165,7 +165,7 @@ NS_IMETHODIMP V4l2FrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint3
 }
 
 /* void notifyChange (in unsigned long screenId, in unsigned long xOrigin, in unsigned long yOrigin, in unsigned long width, in unsigned long height); */
-NS_IMETHODIMP V4l2FrameBuffer::NotifyChange(PRUint32 screenId, PRUint32 xOrigin, PRUint32 yOrigin, PRUint32 width, PRUint32 height)
+NS_IMETHODIMP AvFrameBuffer::NotifyChange(PRUint32 screenId, PRUint32 xOrigin, PRUint32 yOrigin, PRUint32 width, PRUint32 height)
 {
 
 	updateCtx(width, height);
@@ -174,37 +174,37 @@ NS_IMETHODIMP V4l2FrameBuffer::NotifyChange(PRUint32 screenId, PRUint32 xOrigin,
 }
 
 /* void videoModeSupported (in unsigned long width, in unsigned long height, in unsigned long bpp, [retval] out boolean supported); */
-NS_IMETHODIMP V4l2FrameBuffer::VideoModeSupported(PRUint32 width, PRUint32 height, PRUint32 bpp, PRBool *supported)
+NS_IMETHODIMP AvFrameBuffer::VideoModeSupported(PRUint32 width, PRUint32 height, PRUint32 bpp, PRBool *supported)
 {
 	*supported = 1;
     return NS_OK;
 }
 
 /* [noscript] void getVisibleRegion (in octetPtr rectangles, in unsigned long count, [retval] out unsigned long countCopied); */
-NS_IMETHODIMP V4l2FrameBuffer::GetVisibleRegion(PRUint8 * rectangles, PRUint32 count, PRUint32 *countCopied)
+NS_IMETHODIMP AvFrameBuffer::GetVisibleRegion(PRUint8 * rectangles, PRUint32 count, PRUint32 *countCopied)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /* [noscript] void setVisibleRegion (in octetPtr rectangles, in unsigned long count); */
-NS_IMETHODIMP V4l2FrameBuffer::SetVisibleRegion(PRUint8 * rectangles, PRUint32 count)
+NS_IMETHODIMP AvFrameBuffer::SetVisibleRegion(PRUint8 * rectangles, PRUint32 count)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /* [noscript] void processVHWACommand (in octetPtr command); */
-NS_IMETHODIMP V4l2FrameBuffer::ProcessVHWACommand(PRUint8 * command)
+NS_IMETHODIMP AvFrameBuffer::ProcessVHWACommand(PRUint8 * command)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /* void notify3DEvent (in unsigned long type, in unsigned long dataSize, [array, size_is (dataSize)] in octet data); */
-NS_IMETHODIMP V4l2FrameBuffer::Notify3DEvent(PRUint32 type, PRUint32 dataSize, PRUint8 *data)
+NS_IMETHODIMP AvFrameBuffer::Notify3DEvent(PRUint32 type, PRUint32 dataSize, PRUint8 *data)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-void V4l2FrameBuffer::updateCtx(uint32_t width, uint32_t height)
+void AvFrameBuffer::updateCtx(uint32_t width, uint32_t height)
 {
 
 	if(width != _srcWidth || height != _srcHeight)

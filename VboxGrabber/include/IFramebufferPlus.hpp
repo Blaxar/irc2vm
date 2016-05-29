@@ -7,6 +7,17 @@
  */
 #include <VirtualBox_XPCOM.h>
 
+class IFramebufferPlusException : public std::exception {
+  private:
+    std::string err_msg;
+
+  public:
+    IFramebufferPlusException(const char *msg) : err_msg(msg) {};
+	IFramebufferPlusException(const std::string msg) : err_msg(msg) {};
+    ~IFramebufferPlusException() throw() {};
+    const char *what() const throw() { return this->err_msg.c_str(); };
+};
+
 /* Header file */
 class IFramebufferPlus : public IFramebuffer
 {

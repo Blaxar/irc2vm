@@ -26,13 +26,24 @@
 
 #include <V4l2device.hpp>
 
+class VboxGrabberException : public std::exception {
+  private:
+    std::string err_msg;
+
+  public:
+    VboxGrabberException(const char *msg) : err_msg(msg) {};
+	VboxGrabberException(const std::string msg) : err_msg(msg) {};
+    ~VboxGrabberException() throw() {};
+    const char *what() const throw() { return this->err_msg.c_str(); };
+};
+
 class VboxGrabber
 {
 
     public:
 	
     VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height,
-				IFramebufferPlus* frameBuffer = NULL, uint8_t screenID = 0,
+			    IFramebufferPlus* frameBuffer = NULL, uint8_t screenID = 0,
 				PRUint32 format=BitmapFormat_RGBA);
 	
     ~VboxGrabber();
