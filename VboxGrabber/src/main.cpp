@@ -33,21 +33,30 @@ int main(int argc, char* argv[])
 	if(parse_args(argc, argv, vmName, devPath, width, height, fps)<0) return -1;
 	
 	std::cout << "Starting VM..." << std::endl;
-	VboxGrabber grabber(vmName, devPath, width, height, new AvFrameBuffer(width, height));
 
-    milliseconds start = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-	milliseconds last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-	unsigned int nbFrames = 0;
+	try{
+	    VboxGrabber grabber(vmName, devPath, width, height, new AvFrameBuffer(width, height));
 	
-	std::cout << "Starting frame grabing." << std::endl;
 	
-	while( (last-start) < 100s){
-		grabber.grab();
-		last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-		nbFrames++;
+		milliseconds start = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+		milliseconds last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+		unsigned int nbFrames = 0;
+	
+		std::cout << "Starting frame grabing." << std::endl;
+	
+		while( (last-start) < 100s){
+			grabber.grab();
+			last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+			nbFrames++;
+		}
+
+		std::cout << "Grabbed " << nbFrames << " frames in 100 seconds." << std::endl;
+
+	}catch(exception& e){
+		cerr << e.what() << endl;
+		return -1;
 	}
 	
-	std::cout << "Grabbed " << nbFrames << " frames in 100 seconds." << std::endl;
 	return 0;
 	
 }

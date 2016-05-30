@@ -22,6 +22,7 @@ static int c_close(int fd){return close(fd);}
 static ssize_t c_write(int fd, void *buf, size_t count){return write(fd, buf, count);}
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
+#define errno_throw(s) throw V4l2deviceException(std::string(s)+" error "+std::to_string(errno)+", "+strerror(errno))
 
 }
 
@@ -53,7 +54,7 @@ class V4l2device
 		uninit_device();
 
 		if (-1 == c_close(fd))
-                errno_exit("close");
+               errno_throw("close");
 
         fd = -1;
 		
@@ -66,24 +67,16 @@ class V4l2device
 
         struct stat st;
 
-        if (-1 == stat(dev_name, &st)) {
-                fprintf(stderr, "Cannot identify '%s': %d, %s\n",
-                         dev_name, errno, strerror(errno));
-                exit(EXIT_FAILURE);
-        }
+        if (-1 == stat(dev_name, &st))
+                errno_throw(std::string("Cannot identify ")+dev_name);
 
-        if (!S_ISCHR(st.st_mode)) {
-                fprintf(stderr, "%s is no device\n", dev_name);
-                exit(EXIT_FAILURE);
-        }
+        if (!S_ISCHR(st.st_mode))
+				throw  V4l2deviceException(std::string(dev_name)+" is no device");
 
         fd = c_open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
-        if (-1 == fd) {
-                fprintf(stderr, "Cannot open '%s': %d, %s\n",
-                         dev_name, errno, strerror(errno));
-                exit(EXIT_FAILURE);
-        }
+        if (-1 == fd)
+			errno_throw(std::string("Cannot open ")+dev_name);
 		
 		init_device();
         start_streaming();
@@ -107,11 +100,6 @@ class V4l2device
     unsigned int     n_buffers;
     int              out_buf;
     int              force_format;
-
-    void errno_exit(const char *s)
-	{
-		throw V4l2deviceException(std::string(s)+" error "+std::to_string(errno)+", "+strerror(errno));
-	}
 
     int xioctl(int fh, int request, void *arg)
 	{

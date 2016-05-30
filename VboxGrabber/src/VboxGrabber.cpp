@@ -22,7 +22,7 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 {
 
 	//V4l2 device
-	_v4l2device = new V4l2deviceMmap("/dev/video10", width, height);
+	_v4l2device = new V4l2deviceMmap(_dev, width, height);
 	_v4l2device->open();
 	
 	//Virtual Machine handling
@@ -84,26 +84,18 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 		if (NS_FAILED(rc))
 		    throw VboxGrabberException("Error, could not instantiate session object! rc="+to_string(rc));
 
-		//rc = _machine->LockMachine(_session, LockType_Shared);
-		if (NS_FAILED(rc))
-			throw VboxGrabberException("Error, could not lock the machine for the session! rc="+to_string(rc));
+		PRUint32 state;
+		_machine->GetState(&state);
 
-		nsCOMPtr<IProgress> pProgress;
-		rc = _machine->LaunchVMProcess(_session, NS_LITERAL_STRING("headless").get(),
-									  NS_LITERAL_STRING("").get(),
-									  getter_AddRefs(pProgress));
-
-		if (NS_FAILED(rc))
-		    throw VboxGrabberException("Failed to launch machine! rc="+to_string(rc));
-		else
+		if(state == MachineState_Running)
 		{
-			rc = pProgress->WaitForCompletion(-1);
-			PRInt32 resultCode;
-			pProgress->GetResultCode(&resultCode);
-			if (NS_FAILED(rc) || NS_FAILED(resultCode))
-			    throw VboxGrabberException("Failed to launch machine! rc="+
-										   to_string(NS_FAILED(rc) ? rc : resultCode));
-		}
+
+           rc = _machine->LockMachine(_session, LockType_Shared);
+		   if (NS_FAILED(rc))
+		       throw VboxGrabberException("Error, could not lock the machine for the session! rc="+to_string(rc));
+		
+		}else
+			throw VboxGrabberException("Error, this machine is not currently running! rc="+to_string(rc));
 
 		_session->GetConsole(&_console);
 		_console->GetDisplay(&_display);
