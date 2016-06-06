@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <VboxGrabber.hpp>
-#include <AvFrameBuffer.hpp>
 #include <chrono>
 #include <thread>
 #include <iostream>
@@ -35,7 +34,7 @@ int main(int argc, char* argv[])
 	std::cout << "Starting VM..." << std::endl;
 
 	try{
-	    VboxGrabber grabber(vmName, devPath, width, height, new AvFrameBuffer(width, height));
+	    VboxGrabber grabber(vmName, devPath, width, height);
 	
 	
 		milliseconds start = duration_cast<milliseconds>(system_clock::now().time_since_epoch());

@@ -16,9 +16,8 @@ extern "C"{
 
 using namespace std;
 
-VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height, IFramebufferPlus* frameBuffer, uint8_t screenID, PRUint32 format):
-	_screenID(screenID), _dev(dev), _width(width), _height(height),
-     _frameBuffer(frameBuffer), _format(format)
+VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height, uint8_t screenID, PRUint32 format):
+	_screenID(screenID), _dev(dev), _width(width), _height(height), _format(format), _frameBuffer(new AvFrameBuffer(width, height))
 {
 
 	//V4l2 device
@@ -121,11 +120,11 @@ uint32_t VboxGrabber::grab()
 
 VboxGrabber::~VboxGrabber()
 {
-	
+
 	PRUint32 state; _session->GetState(&state);
 	if(state == SessionState_Locked) _session->UnlockMachine();
+	if(_frameBuffer != NULL) _display->DetachFramebuffer(_screenID, _frameBufferID);
 	if(_machine) _machine->Release();
-
 	_v4l2device->close();
 
 }

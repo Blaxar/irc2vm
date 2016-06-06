@@ -22,7 +22,7 @@
  * from IDL which in turn is generated from a custom XML format.
  */
 #include <VirtualBox_XPCOM.h>
-#include <IFramebufferPlus.hpp>
+#include <AvFrameBuffer.hpp>
 
 #include <V4l2device.hpp>
 
@@ -43,8 +43,7 @@ class VboxGrabber
     public:
 	
     VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height,
-			    IFramebufferPlus* frameBuffer = NULL, uint8_t screenID = 0,
-				PRUint32 format=BitmapFormat_RGBA);
+				uint8_t screenID = 0, PRUint32 format=BitmapFormat_RGBA);
 	
     ~VboxGrabber();
 
@@ -67,7 +66,7 @@ class VboxGrabber
     IConsole* _console;
 	
 	IDisplay* _display;
-    IFramebufferPlus* _frameBuffer;
+    AvFrameBuffer* _frameBuffer;
     PRUnichar* _frameBufferID;
 	V4l2device* _v4l2device;
 
