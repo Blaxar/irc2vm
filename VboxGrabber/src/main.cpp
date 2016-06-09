@@ -4,12 +4,20 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <signal.h>
 
 using namespace std;
 using namespace std::chrono;
 using namespace std::this_thread;
 
+sig_atomic_t _stop = 0;
+
 string usage = " <VM name> <path/to/dev/video> <output width> <output height> <fps>"s;
+
+void sigint_handler(int param)
+{
+  _stop = 1;
+}
 
 int parse_args(int argc, char* argv[], string& vmName,
 			   string& devPath, int& width, int& height, float& fps)
@@ -28,28 +36,32 @@ int parse_args(int argc, char* argv[], string& vmName,
 int main(int argc, char* argv[])
 {
 
+	signal(SIGINT, sigint_handler);
+
 	string vmName; string devPath; int width; int height; float fps;
 	if(parse_args(argc, argv, vmName, devPath, width, height, fps)<0) return -1;
-	
-	std::cout << "Starting VM..." << std::endl;
+
+	milliseconds frame_interval((int)(1000/fps));
 
 	try{
 	    VboxGrabber grabber(vmName, devPath, width, height);
 	
 	
 		milliseconds start = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-		milliseconds last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-		unsigned int nbFrames = 0;
+		milliseconds prev, last;
+	    uint64_t nbFrames = 0;
 	
 		std::cout << "Starting frame grabing." << std::endl;
 	
-		while( (last-start) < 100s){
-			grabber.grab();
+		while(_stop==0){
+			prev = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+		    grabber.grab();
 			last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+			std::this_thread::sleep_for(frame_interval-(last-prev));
 			nbFrames++;
 		}
 
-		std::cout << "Grabbed " << nbFrames << " frames in 100 seconds." << std::endl;
+		std::cout << "Grabbed " << nbFrames << " frames in "<< duration_cast<seconds>(last-start).count() <<" seconds." << std::endl;
 
 	}catch(exception& e){
 		cerr << e.what() << endl;

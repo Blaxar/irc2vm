@@ -54,13 +54,6 @@ uint32_t AvFrameBuffer::fetch(uint8_t** data)
 	
 	*data = (uint8_t*)malloc(_frameSize);
 	memcpy(*data, _frameData, _frameSize);
-	/*
-	for(int x=0; x<_dstWidth; x++)
-		for(int y=0; y<_dstHeight; y++)
-		{
-			(*data)[(y*_dstWidth+x)*4+0]=(x/(float)_dstWidth)*255;
-			(*data)[(y*_dstWidth+x)*4+1]=(y/(float)_dstWidth)*255;
-		} */
 	
 	return _frameSize;
 	

@@ -22,7 +22,7 @@
  * from IDL which in turn is generated from a custom XML format.
  */
 #include <VirtualBox_XPCOM.h>
-#include <AvFrameBuffer.hpp>
+#include <IFramebufferPlus.hpp>
 
 #include <V4l2device.hpp>
 
@@ -66,7 +66,7 @@ class VboxGrabber
     IConsole* _console;
 	
 	IDisplay* _display;
-    AvFrameBuffer* _frameBuffer;
+    IFramebufferPlus* _frameBuffer;
     PRUnichar* _frameBufferID;
 	V4l2device* _v4l2device;
 

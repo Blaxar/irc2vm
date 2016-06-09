@@ -131,7 +131,7 @@ void V4l2deviceMmap::init_device(void)
 
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
     if (force_format) {
-		printf("Forcing format.\n");
+
         fmt.fmt.pix.width       = _width;
         fmt.fmt.pix.height      = _height;
         fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB32;
@@ -139,7 +139,7 @@ void V4l2deviceMmap::init_device(void)
 
         if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))
             errno_throw("VIDIOC_S_FMT");
-
+		
         /* Note VIDIOC_S_FMT may change width and height. */
     } else {
 		printf("Not forcing format.\n");
@@ -174,9 +174,6 @@ void V4l2deviceMmap::init_device(void)
         }
     }
 
-	if(req.memory == V4L2_MEMORY_MMAP) printf("V4L2_MEMORY_MMAP.\n");
-	printf("%d\n", req.count);
-
     if (req.count < 2) {
         fprintf(stderr, "Insufficient buffer memory on %s\n",
                 _dev.c_str());
@@ -192,7 +189,6 @@ void V4l2deviceMmap::init_device(void)
 
     for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
         struct v4l2_buffer buf;
-		printf("readying buffer %d\n", n_buffers);
         CLEAR(buf);
 
         buf.type        = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -203,7 +199,6 @@ void V4l2deviceMmap::init_device(void)
             errno_throw("VIDIOC_QUERYBUF");
 
         buffers[n_buffers].length = buf.length;
-		printf("buffer length: %d\n", buf.length);
         buffers[n_buffers].start =
         mmap(NULL /* start anywhere */,
              buf.length,

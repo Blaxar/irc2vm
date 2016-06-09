@@ -1,5 +1,6 @@
 #include <VboxGrabber.hpp>
 #include <V4l2deviceMmap.hpp>
+#include <AvFrameBuffer.hpp>
 
 extern "C"{
 
