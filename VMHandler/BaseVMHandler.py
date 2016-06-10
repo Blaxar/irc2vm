@@ -11,31 +11,21 @@ import threading
 import os,sys
 import traceback
 
-class V4l2Capture(threading.Thread):
-
-    def __init__(self, device, format, display, bmp_fmt):
-        self.device = device
-        self.format = format
-        self.display = display
-        self.bmp_fmt = bmp_fmt
-        super(V4l2Capture,self).__init__()
-
-    def run(self):
-
-        while True:
-            try:
-                im = self.display.takeScreenShotToArray(0, self.format.fmt.pix.width, self.format.fmt.pix.height, self.bmp_fmt)
-                img=np.fromstring(im)
-                self.device.write(img)
-                sleep(1./60.)
-            except Exception as e:
-                sleep(0.1)
-                
+from subprocess import Popen
+           
 
 class BaseVMHandler(object):
-    def __init__(self, vm_name, vidDevName = None):
+    def __init__(self, vm_name, vid_dev = None, grabber_path="./VboxGrabber/bin/VboxGrabber", width=1024, height=768, fps=25):
         
         self.vm_name = vm_name
+        self.vid_dev = vid_dev
+        
+        self.width=width
+        self.height=height
+        self.fps=fps
+        
+        self.grabber_path=grabber_path
+
         self.mouse_btns = 0x00
 
         # This is a VirtualBox COM/XPCOM API client, no data needed.
@@ -85,34 +75,15 @@ class BaseVMHandler(object):
         self.display = console.display
 
         # Check if we have a v4l2 device to write to
-        if vidDevName != None:
-            
-            self.device = open(vidDevName, 'w', 0) # Do not forget the 0 for unbuffered mode RGB(A), won't work otherwise
+        if self.vid_dev != None:
 
-            fmt = V4L2_PIX_FMT_BGR32
-            
-            width = 640
-            height = 480
-        
-            self.format = v4l2_format()
-            self.format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT
-            self.format.fmt.pix.pixelformat = fmt
-            self.format.fmt.pix.width = width
-            self.format.fmt.pix.height = height
-            self.format.fmt.pix.field = V4L2_FIELD_NONE
-            self.format.fmt.pix.bytesperline = width * 4
-            self.format.fmt.pix.sizeimage = width * height * 4
-            self.format.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB
-
-            fcntl.ioctl(self.device, VIDIOC_S_FMT, self.format)
-
-            self.vmDesktopCapture = V4l2Capture(self.device, self.format, self.display, self.vboxConstants.BitmapFormat_BGRA)
-            self.vmDesktopCapture.daemon = True
-            self.vmDesktopCapture.start() # Run the capturing thread
+            self.vmDesktopCapture = Popen([self.grabber_path, self.vm_name, self.vid_dev, str(self.width), str(self.height), str(self.fps)])
 
 
     def __del__(self):
 
+        self.vmDesktopCapture.terminate();
+        
         if self.mach.state == self.vboxConstants.MachineState_Running:
             # We're done -- don't forget to unlock the machine!
             self.session.unlockMachine()

@@ -134,7 +134,7 @@ void V4l2deviceMmap::init_device(void)
 
         fmt.fmt.pix.width       = _width;
         fmt.fmt.pix.height      = _height;
-        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB32;
+        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR32;
         fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
         if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))

@@ -23,7 +23,7 @@ public:
 	NS_DECL_IFRAMEBUFFER
 	
     AvFrameBuffer(uint32_t dstWidth, uint32_t dstHeight,
-				    AVPixelFormat dstPixelFormat = AV_PIX_FMT_RGB32);
+				    AVPixelFormat dstPixelFormat = AV_PIX_FMT_BGR32);
 
     uint32_t fetch(uint8_t** data);
 	

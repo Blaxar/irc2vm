@@ -14,7 +14,7 @@ sig_atomic_t _stop = 0;
 
 string usage = " <VM name> <path/to/dev/video> <output width> <output height> <fps>"s;
 
-void sigint_handler(int param)
+void sigintnterm_handler(int param)
 {
   _stop = 1;
 }
@@ -36,7 +36,8 @@ int parse_args(int argc, char* argv[], string& vmName,
 int main(int argc, char* argv[])
 {
 
-	signal(SIGINT, sigint_handler);
+	signal(SIGINT, sigintnterm_handler);
+	signal(SIGTERM, sigintnterm_handler);
 
 	string vmName; string devPath; int width; int height; float fps;
 	if(parse_args(argc, argv, vmName, devPath, width, height, fps)<0) return -1;
