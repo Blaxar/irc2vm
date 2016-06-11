@@ -18,7 +18,7 @@ class AsyncThread(threading.Thread):
 def main():
     import sys
     if len(sys.argv) < 5:
-        print("Usage: testbot <server[:port]> <channel> <nickname> <VM name> [<out video device> <http listen port>]")
+        print("Usage: "+str(sys.argv[0])+" <server[:port]> <channel> <nickname> <VM name> [<out video device> <width:height:fps> <http listen port>]")
         sys.exit(1)
 
     s = sys.argv[1].split(":", 1)
@@ -40,11 +40,19 @@ def main():
     if len(sys.argv) >= 6:
         vidDevName = sys.argv[5]
 
-    irc_vm_handler = IrcVMHandler(vm_name, channel, nickname, server, vidDevName, port)
-
+    kwargs = {"width": 800, "height": 600, "fps": 25}
     if len(sys.argv) >= 7:
-        http_port = int(sys.argv[6])
-        web_vm_handler = WebVMHandler(vm_name, http_port)
+        s = sys.argv[6].split(":",3)
+        kwargs["width"]=int(s[0])
+        kwargs["height"]=int(s[1])
+        kwargs["fps"]=int(s[2])
+        
+
+    irc_vm_handler = IrcVMHandler(vm_name, channel, nickname, server, vidDevName, port, **kwargs)
+
+    if len(sys.argv) >= 8:
+        http_port = int(sys.argv[7])
+        web_vm_handler = WebVMHandler(vm_name, http_port, **kwargs)
         web_vm_handler.daemon=True
         web_vm_handler.start()
 

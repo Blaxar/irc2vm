@@ -12,8 +12,8 @@ irc.client.ServerConnection.buffer_class = irc.buffer.LenientDecodingLineBuffer 
 
 class IrcVMHandler(irc.bot.SingleServerIRCBot, BaseVMHandler):
 
-    def __init__(self, vm_name, channel, nickname, server, vidDevName = None, port=6667):
-        BaseVMHandler.__init__(self, vm_name, vidDevName)
+    def __init__(self, vm_name, channel, nickname, server, vid_dev = None, port=6667, **kwargs):
+        BaseVMHandler.__init__(self, vm_name, vid_dev, **kwargs)
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
         self.channel = channel
         self.command_str = "VMBOT"

@@ -76,9 +76,9 @@ class WebVMHandler(BaseVMHandler, threading.Thread):
             print("WebSocket closed")
             
     
-    def __init__(self, vm_name, port = 8080, vidDevName = None):
+    def __init__(self, vm_name, port = 8080, vid_dev = None, **kwargs):
         
-        BaseVMHandler.__init__(self, vm_name, vidDevName)
+        BaseVMHandler.__init__(self, vm_name, vid_dev, **kwargs)
         threading.Thread.__init__(self)
         self.port = port
 

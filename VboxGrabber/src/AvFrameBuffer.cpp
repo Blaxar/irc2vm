@@ -53,7 +53,12 @@ _dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL)
 uint32_t AvFrameBuffer::fetch(uint8_t** data)
 {
 
-	if(_swsCtx != NULL){
+	*data = (uint8_t*)malloc(_frameSize);
+
+	if(_dstPixelFormat==_srcPixelFormat && _dstWidth==_srcWidth && _dstHeight==_srcHeight){
+		memcpy(*data, _src, _frameSize);
+		return _frameSize;
+	}else if(_swsCtx != NULL){
 		av_image_fill_arrays(_srcFrame->data, _srcFrame->linesize, _src, _srcPixelFormat, _srcWidth, _srcHeight, 16);
 		
 		sws_scale(_swsCtx, (const uint8_t * const*)_srcFrame->data, _srcFrame->linesize,
@@ -62,7 +67,6 @@ uint32_t AvFrameBuffer::fetch(uint8_t** data)
 		av_image_copy_to_buffer(_frameData, _frameSize, _dstFrame->data, _dstFrame->linesize, _dstPixelFormat, _dstWidth, _dstHeight, 16);
 	}
 	
-	*data = (uint8_t*)malloc(_frameSize);
 	memcpy(*data, _frameData, _frameSize);
 	
 	return _frameSize;
@@ -225,7 +229,7 @@ void AvFrameBuffer::updateCtx(uint32_t width, uint32_t height)
 		if(_swsCtx != NULL) sws_freeContext(_swsCtx);
 		_swsCtx = sws_getContext(_srcWidth, _srcHeight, _srcPixelFormat,
 								 _dstWidth, _dstHeight, _dstPixelFormat,
-								 SWS_BILINEAR, NULL, NULL, NULL);
+								 SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	}
 	
 }

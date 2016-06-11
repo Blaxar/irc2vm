@@ -23,7 +23,7 @@ class BaseVMHandler(object):
         self.width=width
         self.height=height
         self.fps=fps
-        
+
         self.grabber_path=grabber_path
 
         self.mouse_btns = 0x00

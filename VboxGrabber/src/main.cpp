@@ -45,11 +45,12 @@ int main(int argc, char* argv[])
 	milliseconds frame_interval((int)(1000/fps));
 
 	try{
+		
 	    VboxGrabber grabber(vmName, devPath, width, height);
 	
 	
 		milliseconds start = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-		milliseconds prev, last;
+		milliseconds prev, last, sleepFor;
 	    uint64_t nbFrames = 0;
 	
 		std::cout << "Starting frame grabing." << std::endl;
@@ -58,7 +59,8 @@ int main(int argc, char* argv[])
 			prev = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
 		    grabber.grab();
 			last = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-			std::this_thread::sleep_for(frame_interval-(last-prev));
+			sleepFor = duration_cast<milliseconds>(frame_interval-(last-prev));
+			if(sleepFor.count()>0) std::this_thread::sleep_for(sleepFor);
 			nbFrames++;
 		}
 
