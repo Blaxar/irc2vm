@@ -8,7 +8,12 @@ import irc.bot
 import irc.strings
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
-irc.client.ServerConnection.buffer_class = irc.buffer.LenientDecodingLineBuffer #To take care of invalid utf-8 codes
+try:
+    import irc.buffer as ircbuf
+except ImportError:
+    import jaraco.stream.buffer as ircbuf #for older versions of irc module
+
+irc.client.ServerConnection.buffer_class = ircbuf.LenientDecodingLineBuffer #To take care of invalid utf-8 codes
 
 class IrcVMHandler(irc.bot.SingleServerIRCBot, BaseVMHandler):
 
