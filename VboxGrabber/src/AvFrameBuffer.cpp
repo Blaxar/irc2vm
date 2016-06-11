@@ -1,5 +1,6 @@
 #include <AvFrameBuffer.hpp>
 #include <iostream>
+#include <thread>
 
 extern "C"{
 
@@ -51,6 +52,15 @@ _dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL)
 
 uint32_t AvFrameBuffer::fetch(uint8_t** data)
 {
+
+	if(_swsCtx != NULL){
+		av_image_fill_arrays(_srcFrame->data, _srcFrame->linesize, _src, _srcPixelFormat, _srcWidth, _srcHeight, 16);
+		
+		sws_scale(_swsCtx, (const uint8_t * const*)_srcFrame->data, _srcFrame->linesize,
+				  0, _srcHeight, _dstFrame->data, _dstFrame->linesize);
+
+		av_image_copy_to_buffer(_frameData, _frameSize, _dstFrame->data, _dstFrame->linesize, _dstPixelFormat, _dstWidth, _dstHeight, 16);
+	}
 	
 	*data = (uint8_t*)malloc(_frameSize);
 	memcpy(*data, _frameData, _frameSize);
@@ -146,12 +156,6 @@ NS_IMETHODIMP AvFrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint32 
 			for(int r=0; r<height; r++)
 				memcpy(&_src[((y+r)*_srcWidth+x)*4], &image[r*width*4], width*4);
 		
-		av_image_fill_arrays(_srcFrame->data, _srcFrame->linesize, _src, _srcPixelFormat, _srcWidth, _srcHeight, 16);
-		
-		sws_scale(_swsCtx, (const uint8_t * const*)_srcFrame->data, _srcFrame->linesize,
-				  0, _srcHeight, _dstFrame->data, _dstFrame->linesize);
-
-		av_image_copy_to_buffer(_frameData, _frameSize, _dstFrame->data, _dstFrame->linesize, _dstPixelFormat, _dstWidth, _dstHeight, 16);
 	}
 	_count++;
     return NS_OK;
