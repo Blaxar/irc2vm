@@ -48,6 +48,7 @@ protected:
 	AVFrame* _dstFrame;
 	struct SwsContext *_swsCtx;
 	uint8_t* _src;
+	uint8_t* _fastSrc;
 
     size_t _frameSize;
     uint8_t* _frameData;

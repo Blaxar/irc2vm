@@ -33,7 +33,7 @@ NS_IMPL_ISUPPORTS1(AvFrameBuffer, IFramebuffer)
 AvFrameBuffer::AvFrameBuffer(uint32_t dstWidth, uint32_t dstHeight, AVPixelFormat dstPixelFormat):
 _dstWidth(dstWidth), _dstHeight(dstHeight), _srcWidth(0), _srcHeight(0),
 _dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL), _src(NULL),
-	_capabilities(FramebufferCapabilities_UpdateImage), _count(0)
+_capabilities(FramebufferCapabilities_UpdateImage), _fastSrc(NULL), _count(0)
 {
 
 	_vbox2ffmpeg.insert(std::pair<PRUint32, AVPixelFormat>
@@ -56,7 +56,8 @@ uint32_t AvFrameBuffer::fetch(uint8_t** data)
 	*data = (uint8_t*)malloc(_frameSize);
 
 	if(_dstPixelFormat==_srcPixelFormat && _dstWidth==_srcWidth && _dstHeight==_srcHeight){
-		memcpy(*data, _src, _frameSize);
+		if(_fastSrc==NULL) memcpy(*data, _src, _frameSize);
+		else{ memcpy(*data, _fastSrc, _frameSize); memcpy(_src, _fastSrc, _frameSize);}
 		return _frameSize;
 	}else if(_swsCtx != NULL){
 		av_image_fill_arrays(_srcFrame->data, _srcFrame->linesize, _src, _srcPixelFormat, _srcWidth, _srcHeight, 16);
@@ -155,11 +156,12 @@ NS_IMETHODIMP AvFrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint32 
 	if(_swsCtx != NULL){
 		
 		if(_srcWidth == width && _srcHeight == height)
-			memcpy(_src, image, imageSize);
-        else
+		    _fastSrc = image;
+        else{
+			_fastSrc = NULL;
 			for(int r=0; r<height; r++)
 				memcpy(&_src[((y+r)*_srcWidth+x)*4], &image[r*width*4], width*4);
-		
+		}
 	}
 	_count++;
     return NS_OK;
