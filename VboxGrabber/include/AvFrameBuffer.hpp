@@ -31,7 +31,7 @@ private:
 	
     ~AvFrameBuffer();
 
-protected:
+protected: 
 
 	void updateCtx(uint32_t width, uint32_t height);
 
@@ -48,7 +48,6 @@ protected:
 	AVFrame* _dstFrame;
 	struct SwsContext *_swsCtx;
 	uint8_t* _src;
-	uint8_t* _fastSrc;
 
     size_t _frameSize;
     uint8_t* _frameData;
