@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 		milliseconds prev, last, sleepFor;
 	    uint64_t nbFrames = 0;
 	
-		std::cout << "Starting frame grabing." << std::endl;
+		std::cout << "Starting frame grabbing." << std::endl;
 	
 		while(_stop==0){
 			prev = duration_cast<milliseconds>(system_clock::now().time_since_epoch());

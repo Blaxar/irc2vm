@@ -16,6 +16,48 @@ extern "C"{
 
 #include <IFramebufferPlus.hpp>
 
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+struct FrameImage{
+	uint32_t x,y,width,height,imageSize;
+	uint8_t* data;
+};
+
+class AvQueue
+{
+
+public:
+
+	FrameImage pop()
+	{
+		std::unique_lock<std::mutex> mlock(_mutex);
+		while(_queue.empty())
+			_cond.wait(mlock); //Release the lock to other thread(s), returns when notified the condition has been met.
+
+		FrameImage fi = _queue.front();
+		_queue.pop();
+		return fi;
+	}
+	
+	void push(const FrameImage& fi)
+	{
+		std::unique_lock<std::mutex> mlock(_mutex);
+		_queue.push(fi);
+		mlock.unlock();
+		_cond.notify_one(); //notify the condition has been met.
+	}
+	
+private:
+
+	std::queue<FrameImage> _queue;
+	std::mutex _mutex;
+	std::condition_variable _cond;
+	
+};
+
 class AvFrameBuffer : public IFramebufferPlus
 {
 public:
@@ -34,6 +76,7 @@ private:
 protected: 
 
 	void updateCtx(uint32_t width, uint32_t height);
+	void writeSrc();
 
 	const uint32_t _dstWidth, _dstHeight;
     uint32_t _srcWidth, _srcHeight;
@@ -53,6 +96,9 @@ protected:
     uint8_t* _frameData;
 
 	uint32_t _count;
+
+	AvQueue _avq;
+	std::thread _avThread;
 	
 };
 

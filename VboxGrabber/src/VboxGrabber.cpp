@@ -22,7 +22,7 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 {
 
 	//V4l2 device
-	_v4l2device = new V4l2deviceMmap(_dev, width, height);
+	_v4l2device = std::make_unique<V4l2deviceMmap>(_dev, width, height);
 	_v4l2device->open();
 	
 	//Virtual Machine handling

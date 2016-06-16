@@ -48,6 +48,9 @@ _dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL)
 
 	_frameSize = _dstWidth*_dstHeight*4*sizeof(uint8_t);
 	_frameData = (uint8_t*) malloc(_frameSize);
+
+	_avThread = std::thread(&AvFrameBuffer::writeSrc, this);
+	
 }
 
 uint32_t AvFrameBuffer::fetch(uint8_t** data)
@@ -152,15 +155,8 @@ NS_IMETHODIMP AvFrameBuffer::NotifyUpdate(PRUint32 x, PRUint32 y, PRUint32 width
 NS_IMETHODIMP AvFrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint32 width, PRUint32 height, PRUint32 imageSize, PRUint8 *image)
 {
 
-	if(_swsCtx != NULL){
-		
-		if(_srcWidth == width && _srcHeight == height)
-			memcpy(_src, image, imageSize);
-        else
-			for(int r=0; r<height; r++)
-				memcpy(&_src[((y+r)*_srcWidth+x)*4], &image[r*width*4], width*4);
-		
-	}
+	FrameImage fi = {x,y,width,height,imageSize,image};
+	_avq.push(fi);
 	_count++;
     return NS_OK;
 }
@@ -232,4 +228,20 @@ void AvFrameBuffer::updateCtx(uint32_t width, uint32_t height)
 								 SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	}
 	
+}
+
+void AvFrameBuffer::writeSrc()
+{
+	while(true){
+		FrameImage fi = _avq.pop();
+		if(_swsCtx != NULL){
+		
+			if(_srcWidth == fi.width && _srcHeight == fi.height)
+				memcpy(_src, fi.data, fi.imageSize);
+			else
+				for(int r=0; r<fi.height; r++)
+					memcpy(&_src[((fi.y+r)*_srcWidth+fi.x)*4], &fi.data[r*fi.width*4], fi.width*4);
+
+		}
+	}
 }

@@ -16,6 +16,7 @@
 #include <nsIExceptionService.h>
 
 #include <string>
+#include <memory>
 
 /*
  * VirtualBox XPCOM interface. This header is generated
@@ -65,10 +66,10 @@ class VboxGrabber
     nsCOMPtr<ISession> _session;
     IConsole* _console;
 	
-	IDisplay* _display;
+    IDisplay* _display;
     IFramebufferPlus* _frameBuffer;
     PRUnichar* _frameBufferID;
-	V4l2device* _v4l2device;
+	std::unique_ptr<V4l2device> _v4l2device;
 
 };
 

@@ -9,6 +9,8 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/bin")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+find_package(Threads REQUIRED)
+
 find_package(FFmpeg REQUIRED COMPONENTS avutil avcodec avformat
 swscale OPTIONAL_COMPONENTS swresample)
 
@@ -33,7 +35,7 @@ include_directories(
     ${VBOX_INCLUDE_DIR}/ipcd
 )
 
-add_definitions(-std=c++14 -O3 -ldl -lpthread -fshort-wchar -DVBOX_WITH_XPCOM_NAMESPACE_CLEANUP -DRT_OS_LINUX)
+add_definitions(-std=c++14 -O3 -ldl -fshort-wchar -DVBOX_WITH_XPCOM_NAMESPACE_CLEANUP -DRT_OS_LINUX)
 
 link_directories(${DEFAULT_LINK_DIR})
 add_subdirectory(src)
