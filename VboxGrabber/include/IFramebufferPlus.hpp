@@ -28,7 +28,7 @@ class IFramebufferPlus : public IFramebuffer
 	virtual uint32_t fetch(uint8_t** data) = 0;
 	
 	~IFramebufferPlus(){}
-
+	
 };
 
 #endif //IFRAMEBUFFERPLUS_HPP

@@ -35,7 +35,7 @@ include_directories(
     ${VBOX_INCLUDE_DIR}/ipcd
 )
 
-add_definitions(-std=c++14 -O3 -ldl -fshort-wchar -DVBOX_WITH_XPCOM_NAMESPACE_CLEANUP -DRT_OS_LINUX)
+add_definitions(-std=c++14 -ldl -fshort-wchar -DVBOX_WITH_XPCOM_NAMESPACE_CLEANUP -DRT_OS_LINUX)
 
 link_directories(${DEFAULT_LINK_DIR})
 add_subdirectory(src)

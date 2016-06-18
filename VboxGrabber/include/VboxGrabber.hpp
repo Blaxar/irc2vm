@@ -17,6 +17,8 @@
 
 #include <string>
 #include <memory>
+#include <queue>
+#include <thread>
 
 /*
  * VirtualBox XPCOM interface. This header is generated
@@ -44,7 +46,7 @@ class VboxGrabber
     public:
 	
     VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height,
-				uint8_t screenID = 0, PRUint32 format=BitmapFormat_RGBA);
+				uint8_t screenID = 0, bool useFrameBuffer = false);
 	
     ~VboxGrabber();
 
@@ -67,9 +69,14 @@ class VboxGrabber
     IConsole* _console;
 	
     IDisplay* _display;
+	uint8_t* _srcData;
     IFramebufferPlus* _frameBuffer;
     PRUnichar* _frameBufferID;
 	std::unique_ptr<V4l2device> _v4l2device;
+
+	std::queue<std::thread> _threadQueue;
+
+	void takeScreenshot();
 
 };
 

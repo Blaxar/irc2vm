@@ -1,6 +1,7 @@
 #include <AvFrameBuffer.hpp>
 #include <iostream>
 #include <thread>
+#include <chrono>
 
 extern "C"{
 
@@ -27,6 +28,8 @@ extern "C"{
 #include <assert.h>
 
 }
+
+using namespace std;
 
 NS_IMPL_ISUPPORTS1(AvFrameBuffer, IFramebuffer)
 
@@ -55,7 +58,7 @@ _dstPixelFormat(dstPixelFormat), _srcFrame(NULL), _dstFrame(NULL), _swsCtx(NULL)
 
 uint32_t AvFrameBuffer::fetch(uint8_t** data)
 {
-
+	
 	*data = (uint8_t*)malloc(_frameSize);
 
 	if(_dstPixelFormat==_srcPixelFormat && _dstWidth==_srcWidth && _dstHeight==_srcHeight){
@@ -154,17 +157,16 @@ NS_IMETHODIMP AvFrameBuffer::NotifyUpdate(PRUint32 x, PRUint32 y, PRUint32 width
 /* void notifyUpdateImage (in unsigned long x, in unsigned long y, in unsigned long width, in unsigned long height, in unsigned long imageSize, [array, size_is (imageSize)] in octet image); */
 NS_IMETHODIMP AvFrameBuffer::NotifyUpdateImage(PRUint32 x, PRUint32 y, PRUint32 width, PRUint32 height, PRUint32 imageSize, PRUint8 *image)
 {
-
 	FrameImage fi = {x,y,width,height,imageSize,image};
 	_avq.push(fi);
 	_count++;
+	
     return NS_OK;
 }
 
 /* void notifyChange (in unsigned long screenId, in unsigned long xOrigin, in unsigned long yOrigin, in unsigned long width, in unsigned long height); */
 NS_IMETHODIMP AvFrameBuffer::NotifyChange(PRUint32 screenId, PRUint32 xOrigin, PRUint32 yOrigin, PRUint32 width, PRUint32 height)
 {
-
 	updateCtx(width, height);
 	
     return NS_OK;

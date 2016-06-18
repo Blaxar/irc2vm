@@ -15,12 +15,17 @@ extern "C"{
 	
 }
 
+#include <iostream>
+
 using namespace std;
 
-VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height, uint8_t screenID, PRUint32 format):
-	_screenID(screenID), _dev(dev), _width(width), _height(height), _format(format), _frameBuffer(new AvFrameBuffer(width, height))
+VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height, uint8_t screenID, bool useFrameBuffer):
+	_screenID(screenID), _dev(dev), _width(width), _height(height), _format(BitmapFormat_BGRA),
+	_srcData(NULL), _frameBuffer(NULL)//_frameBuffer(new AvFrameBuffer(width, height))
 {
 
+	if(useFrameBuffer) _frameBuffer = new AvFrameBuffer(width, height);
+	
 	//V4l2 device
 	_v4l2device = std::make_unique<V4l2deviceMmap>(_dev, width, height);
 	_v4l2device->open();
@@ -41,7 +46,6 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
     rc = NS_GetMainEventQ(getter_AddRefs(_eventQ));
     if (NS_FAILED(rc))
         throw VboxGrabberException("Error: could not get main event queue! rc="+to_string(rc));
-
 
         /*
          * Now XPCOM is ready and we can start to do real work.
@@ -100,8 +104,9 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 		_session->GetConsole(&_console);
 		_console->GetDisplay(&_display);
 		if(_frameBuffer != NULL) _display->AttachFramebuffer(_screenID, _frameBuffer, &_frameBufferID);
-		else throw VboxGrabberException("Failed to attach framebuffer (NULL).");
-		
+		//else throw VboxGrabberException("Failed to attach framebuffer (NULL).");
+		//else _srcData = (uint8_t*) malloc(_width*_height*4);
+			
 	}
 
 }
@@ -109,20 +114,42 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 uint32_t VboxGrabber::grab()
 {
 	PRUint32 size;
-	//_display->TakeScreenShotToArray(_screenID, _width, _height, _format, &size, data);
-	uint8_t* data;
-	size = _frameBuffer->fetch(&data);
-    _v4l2device->write((const void*) data, size);
-	free(data);
-    _eventQ->ProcessPendingEvents();
-
+	uint8_t* data = NULL;
+    
+	if(_frameBuffer != NULL) size = _frameBuffer->fetch(&data);
+	else{
+		size = _width*_height*4;
+		_threadQueue.push(thread(&VboxGrabber::takeScreenshot, this));
+		/*nsresult rc = _display->TakeScreenShotToArray(_screenID, _width, _height, _format, &size, &data);
+		if(NS_FAILED(rc))
+		{
+			if(data != NULL) free(data);
+		    return 0;
+		} */
+	}
+	
+    //_v4l2device->write((const void*) data, size);
+	
+    //free(data);
+	_eventQ->ProcessPendingEvents();
 	return size;
+}
+
+void VboxGrabber::takeScreenshot()
+{
+	PRUint32 size;
+	uint8_t* data = NULL;
+	_display->TakeScreenShotToArray(_screenID, _width, _height, _format, &size, &data);
+	_v4l2device->write((const void*) data, size);
+    free(data);
+	if(_threadQueue.size() > 1){_threadQueue.front().join(); _threadQueue.pop();} //We join and pop one previous (done) thread, so we don't stack them in the queue
 }
 
 VboxGrabber::~VboxGrabber()
 {
 
 	PRUint32 state; _session->GetState(&state);
+	if(_srcData != NULL) free(_srcData);
 	if(state == SessionState_Locked) _session->UnlockMachine();
 	if(_frameBuffer != NULL) _display->DetachFramebuffer(_screenID, _frameBufferID);
 	if(_machine) _machine->Release();
