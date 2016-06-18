@@ -19,6 +19,7 @@
 #include <memory>
 #include <queue>
 #include <thread>
+#include <mutex>
 
 /*
  * VirtualBox XPCOM interface. This header is generated
@@ -74,6 +75,20 @@ class VboxGrabber
     PRUnichar* _frameBufferID;
 	std::unique_ptr<V4l2device> _v4l2device;
 
+	std::mutex _doneMutex;
+	uint16_t _doneThreads;
+
+	void oneMoreDone(){_doneMutex.lock(); _doneThreads++;  _doneMutex.unlock();}
+	void popDone(){
+		_doneMutex.lock();
+		for(int i=0; i<_doneThreads; i++){
+			_threadQueue.front().join();
+			_threadQueue.pop();
+		}
+		_doneThreads = 0;
+		_doneMutex.unlock();
+	}
+	
 	std::queue<std::thread> _threadQueue;
 
 	void takeScreenshot();

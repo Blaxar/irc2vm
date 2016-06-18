@@ -21,7 +21,7 @@ using namespace std;
 
 VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, uint32_t height, uint8_t screenID, bool useFrameBuffer):
 	_screenID(screenID), _dev(dev), _width(width), _height(height), _format(BitmapFormat_BGRA),
-	_srcData(NULL), _frameBuffer(NULL)//_frameBuffer(new AvFrameBuffer(width, height))
+	_srcData(NULL), _frameBuffer(NULL), _doneThreads(0)//_frameBuffer(new AvFrameBuffer(width, height))
 {
 
 	if(useFrameBuffer) _frameBuffer = new AvFrameBuffer(width, height);
@@ -113,6 +113,7 @@ VboxGrabber::VboxGrabber(std::string vmName, std::string dev, uint32_t width, ui
 
 uint32_t VboxGrabber::grab()
 {
+	popDone();
 	PRUint32 size;
 	uint8_t* data = NULL;
     
@@ -142,7 +143,8 @@ void VboxGrabber::takeScreenshot()
 	_display->TakeScreenShotToArray(_screenID, _width, _height, _format, &size, &data);
 	_v4l2device->write((const void*) data, size);
     free(data);
-	if(_threadQueue.size() > 1){_threadQueue.front().join(); _threadQueue.pop();} //We join and pop one previous (done) thread, so we don't stack them in the queue
+	//if(_threadQueue.size() > 1){_threadQueue.front().join(); _threadQueue.pop();} //We join and pop one previous (done) thread, so we don't stack them in the queue
+	oneMoreDone();
 }
 
 VboxGrabber::~VboxGrabber()
