@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 
 	try{
 		
-	    VboxGrabber grabber(vmName, devPath, width, height, 0, false);
+	    VboxGrabber grabber(vmName, devPath, width, height, 0);
 	
 	
 		milliseconds start = duration_cast<milliseconds>(system_clock::now().time_since_epoch());

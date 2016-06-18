@@ -11,9 +11,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 
 find_package(Threads REQUIRED)
 
-find_package(FFmpeg REQUIRED COMPONENTS avutil avcodec avformat
-swscale OPTIONAL_COMPONENTS swresample)
-
 set(DEFAULT_SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(DEFAULT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 set(DEFAULT_LINK_DIR ${CMAKE_SOURCE_DIR}/lib)
@@ -27,7 +24,6 @@ set(VBOX_INCLUDE_DIR ${VBOX_INSTALL_DIR}/sdk/bindings/xpcom/include)
 #Define all the include directories
 include_directories(
     ${DEFAULT_INCLUDE_DIR}
-	${FFMPEG_INCLUDE_DIRS}
 	${VBOX_INCLUDE_DIR}
 	${VBOX_INCLUDE_DIR}/nsprpub
     ${VBOX_INCLUDE_DIR}/string
